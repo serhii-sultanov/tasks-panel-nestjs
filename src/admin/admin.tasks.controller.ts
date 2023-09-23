@@ -1,18 +1,14 @@
 import {
-  Controller,
-  Post,
-  UseGuards,
-  UsePipes,
-  ValidationPipe,
-  Request,
   Body,
   ConflictException,
+  Controller,
+  Post,
+  Request,
   UploadedFiles,
+  UseGuards,
   UseInterceptors,
-  ParseFilePipeBuilder,
-  HttpStatus,
-  ParseFilePipe,
-  FileTypeValidator,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import {
