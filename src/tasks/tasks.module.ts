@@ -8,12 +8,14 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Task, TaskSchema } from './schemas/task.schema';
 import { File, FileSchema } from './schemas/file.schema';
 import { User, UserSchema } from 'src/user/schemas/user.schema';
+import { TaskList, TaskListSchema } from './schemas/task-list.schema';
 
 @Module({
   imports: [
     UserModule,
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
+      { name: TaskList.name, schema: TaskListSchema },
       { name: Task.name, schema: TaskSchema },
       { name: File.name, schema: FileSchema },
     ]),
