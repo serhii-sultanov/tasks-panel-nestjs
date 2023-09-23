@@ -8,11 +8,15 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
+import { TasksModule } from './tasks/tasks.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
+    AdminModule,
     UserModule,
     AuthModule,
+    TasksModule,
     MongooseModule.forRoot(process.env.MONGO_URI),
     ConfigModule.forRoot({ isGlobal: true }),
     JwtModule.registerAsync({
