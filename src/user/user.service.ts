@@ -49,14 +49,4 @@ export class UserService {
       email,
     });
   }
-
-  // async getUserData(userId: number): Promise<User> {
-  //   const userData = await this.userRepository.findOne({
-  //     where: { id: userId },
-  //   });
-  //   if (!userData) {
-  //     throw new NotFoundException(`Current user does not exist.`);
-  //   }
-  //   return instanceToPlain(userData) as User;
-  // }
 }

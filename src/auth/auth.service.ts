@@ -22,4 +22,20 @@ export class AuthService {
     }
     throw new UnauthorizedException('Incorrect User Data!');
   }
+
+  async login(user: User): Promise<any> {
+    const { id, email, firstName, role } = user;
+    return {
+      id,
+      email,
+      role,
+      firstName,
+      token: this.jwtService.sign({
+        id: id,
+        email: email,
+        role: role,
+        firstName: firstName,
+      }),
+    };
+  }
 }

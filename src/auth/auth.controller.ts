@@ -22,8 +22,10 @@ import { Token } from 'src/types/type';
 import { User } from 'src/user/schemas/user.schema';
 import { UserService } from 'src/user/user.service';
 import { AuthService } from './auth.service';
+import { LoginUserDto } from './dto/login-user.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { LocalAuthGuard } from './guards/local-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -46,6 +48,18 @@ export class AuthController {
   @UsePipes(new ValidationPipe())
   create(@Body() registerUserDto: RegisterUserDto): Promise<Token> {
     return this.userService.registration(registerUserDto);
+  }
+
+  @ApiOperation({ summary: 'User Login' })
+  @ApiBody({ type: LoginUserDto })
+  @ApiUnauthorizedResponse({ description: 'Incorrect Email or Password.' })
+  @Post('login')
+  @UseGuards(LocalAuthGuard)
+  async login(
+    @Request() req,
+    @Body() loginUserDto: LoginUserDto,
+  ): Promise<any> {
+    return this.authService.login(req.user);
   }
 
   @ApiOperation({ description: 'Get User Profile' })
