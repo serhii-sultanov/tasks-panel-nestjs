@@ -3,10 +3,13 @@ import { JwtService } from '@nestjs/jwt';
 import { User } from 'src/user/schemas/user.schema';
 import { UserService } from 'src/user/user.service';
 import * as bcrypt from 'bcryptjs';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 
 @Injectable()
 export class AuthService {
   constructor(
+    @InjectModel(User.name) private userModel: Model<User>,
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
   ) {}
@@ -18,7 +21,12 @@ export class AuthService {
     }
     const passwordIsMatch = await bcrypt.compare(password, user.password);
     if (user && passwordIsMatch) {
-      return user;
+      const updatedUser = await this.userModel.findByIdAndUpdate(
+        user._id,
+        { $set: { invitation_accepted: true } },
+        { new: true },
+      );
+      return updatedUser;
     }
     throw new UnauthorizedException('Incorrect User Data!');
   }

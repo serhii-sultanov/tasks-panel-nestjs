@@ -31,6 +31,10 @@ export class User extends BaseDocument {
   @ApiProperty()
   @Prop({ default: 'user' })
   role: string;
+
+  @ApiProperty()
+  @Prop({ default: false })
+  invitation_accepted: boolean;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
