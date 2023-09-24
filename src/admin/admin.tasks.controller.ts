@@ -27,6 +27,7 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { CreateTaskDto } from 'src/tasks/dto/create-task.dto';
 import { TasksService } from 'src/tasks/tasks.service';
 import { AdminAuthGuard } from './guards/admin-auth.guard';
+import { Message } from 'src/types/type';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard)
@@ -93,8 +94,7 @@ export class AdminTasksController {
     @Body() createTaskDto: CreateTaskDto,
     @UploadedFiles()
     files: Express.Multer.File[],
-  ): Promise<any> {
-    console.log(files);
-    return this.tasksService.createTask(createTaskDto);
+  ): Promise<Message> {
+    return this.tasksService.createTask(createTaskDto, files);
   }
 }

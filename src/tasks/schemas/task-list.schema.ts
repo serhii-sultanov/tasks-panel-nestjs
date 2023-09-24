@@ -11,6 +11,9 @@ export class TaskList extends BaseDocument {
   @Prop({ required: true, type: mongoose.Schema.Types.ObjectId, ref: 'User' })
   user_id: User;
 
+  @Prop({ required: true })
+  task_list_name: string;
+
   @Prop([{ type: mongoose.Schema.Types.ObjectId, ref: 'Task' }])
   task_list: Task[];
 }
