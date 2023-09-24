@@ -1,4 +1,8 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import * as fs from 'fs';
 import mongoose, { Model } from 'mongoose';
@@ -40,6 +44,7 @@ export class TasksService {
           file_originalName: file.originalname,
           file_size: file.size,
           file_path: file.path,
+          file_contentType: file.mimetype,
         };
       });
       const newFiles = await this.fileModel.create(newFilesData, {
@@ -112,6 +117,19 @@ export class TasksService {
       throw new ConflictException('Error when creating new task');
     } finally {
       transactionSession.endSession();
+    }
+  }
+
+  async downloadFile(fileId: string): Promise<File> {
+    try {
+      const file = await this.fileModel.findById(fileId);
+      if (!file) {
+        throw new NotFoundException('File not found');
+      }
+
+      return file;
+    } catch (err) {
+      throw new ConflictException('Error when load file');
     }
   }
 }

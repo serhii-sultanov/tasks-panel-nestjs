@@ -16,6 +16,9 @@ export class File extends BaseDocument {
 
   @Prop({ required: true })
   file_size: number;
+
+  @Prop({ required: true })
+  file_contentType: string;
 }
 
 export const FileSchema = SchemaFactory.createForClass(File);
