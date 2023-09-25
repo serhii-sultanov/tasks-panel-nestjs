@@ -30,7 +30,12 @@ export class TasksService {
     const transactionSession = await this.connection.startSession();
     try {
       transactionSession.startTransaction();
-
+      const client = await this.userModel
+        .findById(createTaskDto.user_id)
+        .session(transactionSession);
+      if (!client) {
+        throw new NotFoundException('Client Not Found');
+      }
       const isTaskList = await this.taskListModel
         .findOne({
           user_id: createTaskDto.user_id,
@@ -67,6 +72,13 @@ export class TasksService {
         });
 
         await taskList.save({ session: transactionSession });
+
+        await this.userModel.findByIdAndUpdate(
+          createTaskDto.user_id,
+          { $push: { taskLists: taskList } },
+          { session: transactionSession },
+        );
+
         await transactionSession.commitTransaction();
 
         return { message: 'Task list and task has been succesfully created' };

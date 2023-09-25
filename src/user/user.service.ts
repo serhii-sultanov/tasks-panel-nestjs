@@ -2,9 +2,9 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-//   import { instanceToPlain } from 'class-transformer';
 import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcryptjs';
 import { Model } from 'mongoose';
@@ -37,7 +37,6 @@ export class UserService {
       const token = this.jwtService.sign({ email: registerUserDto.email });
       return { token };
     } catch (err) {
-      console.log(err);
       throw new InternalServerErrorException(
         'An error occurred when saving the new User.',
       );
@@ -48,5 +47,36 @@ export class UserService {
     return await this.userModel.findOne({
       email,
     });
+  }
+
+  async getClientAccount(userId: string) {
+    try {
+      const client = await this.userModel
+        .findById(userId)
+        .select('-password')
+        .populate({
+          path: 'taskLists',
+          model: 'TaskList',
+          populate: {
+            path: 'task_list',
+            model: 'Task',
+            populate: {
+              path: 'task_files',
+              model: 'File',
+            },
+          },
+        })
+        .exec();
+
+      if (!client) {
+        throw new NotFoundException('Client not found');
+      }
+
+      return client;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        'An error occurred when getting the client account.',
+      );
+    }
   }
 }

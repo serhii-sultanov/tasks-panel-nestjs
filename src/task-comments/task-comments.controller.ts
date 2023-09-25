@@ -10,29 +10,29 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { UserService } from './user.service';
+import { TaskCommentsService } from './task-comments.service';
 
-@ApiTags('User Endpoints')
-@Controller('user')
-export class UserController {
-  constructor(private readonly userService: UserService) {}
+@ApiTags('Work with Tasks Comments')
+@Controller('comment')
+export class TaskCommentsController {
+  constructor(private readonly taskCommentsService: TaskCommentsService) {}
 
-  @ApiOperation({ summary: 'Get client data' })
+  @ApiOperation({ summary: 'Get task comments' })
   @ApiBearerAuth('Token')
   @ApiOkResponse({
-    description: 'Client account has been successfully got.',
+    description: 'Task comments has successfully got',
   })
-  @ApiNotFoundResponse({ description: 'Client not found' })
+  @ApiNotFoundResponse({ description: 'Comments not found' })
   @ApiUnauthorizedResponse({
     description: 'User does not have Token. User Unauthorized.',
   })
   @ApiInternalServerErrorResponse({
-    description: 'An error occurred when getting the client account',
+    description: 'An error occurred when getting the comments',
   })
   @ApiConflictResponse({ description: 'User does not have any rights.' })
-  @Get('account/:userId')
+  @Get('task/:taskId')
   @UseGuards(JwtAuthGuard)
-  getClientAccount(@Param('userId') userId: string) {
-    return this.userService.getClientAccount(userId);
+  getTaskComments(@Param('taskId') taskId: string) {
+    return this.taskCommentsService.getTaskComments(taskId);
   }
 }

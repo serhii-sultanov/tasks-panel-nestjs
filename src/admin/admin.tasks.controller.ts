@@ -1,8 +1,6 @@
 import {
   Body,
-  ConflictException,
   Controller,
-  Get,
   Post,
   Request,
   UploadedFiles,
@@ -11,7 +9,6 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { FilesInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
   ApiConflictResponse,
@@ -22,13 +19,12 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { CreateTaskDto } from 'src/tasks/dto/create-task.dto';
 import { TasksService } from 'src/tasks/tasks.service';
-import { AdminAuthGuard } from './guards/admin-auth.guard';
 import { Message } from 'src/types/type';
+import { fileUploadInterceptor } from 'src/utils/fileUploadInterceptor';
+import { AdminAuthGuard } from './guards/admin-auth.guard';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard)
@@ -52,43 +48,7 @@ export class AdminTasksController {
   @Post('/create-task')
   @UseGuards(AdminAuthGuard)
   @ApiConsumes('multipart/form-data')
-  @UseInterceptors(
-    FilesInterceptor('files', 10, {
-      storage: diskStorage({
-        destination: './src/fileUploads',
-        filename: (req, file, callback) => {
-          const uniqueSuffix =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          const fileExtension = extname(file.originalname).toLowerCase();
-          const newFileName =
-            file.fieldname + '-' + uniqueSuffix + fileExtension;
-          callback(null, newFileName);
-        },
-      }),
-      fileFilter: (req, file, callback) => {
-        const allowedMimeTypes = [
-          'application/pdf',
-          'text/csv',
-          'application/vnd.ms-excel',
-          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          'image/png',
-          'image/jpeg',
-          'image/jpg',
-          'application/zip',
-        ];
-        if (allowedMimeTypes.includes(file.mimetype)) {
-          callback(null, true);
-        } else {
-          callback(
-            new ConflictException(
-              'Invalid file format. Please load only this format file: (png | jpg | pdf | zip | csv | xls | xlsx | jpeg)',
-            ),
-            false,
-          );
-        }
-      },
-    }),
-  )
+  @UseInterceptors(fileUploadInterceptor)
   @UsePipes(new ValidationPipe())
   async createTask(
     @Request() req,

@@ -1,6 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
+import mongoose from 'mongoose';
+import { TaskList } from 'src/tasks/schemas/task-list.schema';
 import { BaseDocument } from 'src/utils/BaseDocument';
 
 @Schema({
@@ -31,6 +33,9 @@ export class User extends BaseDocument {
   @ApiProperty()
   @Prop({ default: 'user' })
   role: string;
+
+  @Prop([{ type: mongoose.Schema.Types.ObjectId, ref: 'TaskList' }])
+  taskLists: TaskList[];
 
   @ApiProperty()
   @Prop({ default: false })

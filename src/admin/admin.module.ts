@@ -10,6 +10,7 @@ import { File, FileSchema } from 'src/tasks/schemas/file.schema';
 import { TaskList, TaskListSchema } from 'src/tasks/schemas/task-list.schema';
 import { AdminService } from './admin.service';
 import { AdminTasksController } from './admin.tasks.controller';
+import { AdminController } from './admin.controller';
 
 @Module({
   imports: [
@@ -29,7 +30,7 @@ import { AdminTasksController } from './admin.tasks.controller';
     }),
   ],
   providers: [TasksService, AdminService],
-  controllers: [TasksController, AdminTasksController],
+  controllers: [TasksController, AdminTasksController, AdminController],
   exports: [AdminService],
 })
 export class AdminModule {}

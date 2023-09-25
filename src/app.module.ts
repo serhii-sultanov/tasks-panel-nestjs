@@ -10,10 +10,12 @@ import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { TasksModule } from './tasks/tasks.module';
 import { AdminModule } from './admin/admin.module';
+import { TaskCommentsModule } from './task-comments/task-comments.module';
 
 @Module({
   imports: [
     AdminModule,
+    TaskCommentsModule,
     UserModule,
     AuthModule,
     TasksModule,

@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 import mongoose from 'mongoose';
+import { User } from 'src/user/schemas/user.schema';
 import { BaseDocument } from 'src/utils/BaseDocument';
 
 @Schema({
@@ -27,18 +28,24 @@ export class Task extends BaseDocument {
   @Prop([
     {
       _id: { type: Number, autoIncrement: true },
+      user_id: {
+        required: true,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+      },
       comment: String,
       createdAt: { type: Date, default: Date.now },
       updatedAt: { type: Date, default: Date.now },
-      file_id: { type: mongoose.Schema.Types.ObjectId, ref: 'File' },
+      files_id: [{ type: mongoose.Schema.Types.ObjectId, ref: 'File' }],
     },
   ])
   task_comments: {
     _id: number;
+    user_id: User;
     comment: string;
     createdAt: Date;
     updatedAt: Date;
-    file_id: mongoose.Schema.Types.ObjectId;
+    files_id: mongoose.Schema.Types.ObjectId[];
   }[];
 }
 
