@@ -9,10 +9,10 @@ import * as fs from 'fs';
 import mongoose, { Model } from 'mongoose';
 import { File } from 'src/tasks/schemas/file.schema';
 import { Task } from 'src/tasks/schemas/task.schema';
-import { User } from 'src/user/schemas/user.schema';
-import { LeaveCommentDto } from './dto/leave-comment.dto';
 import { Message } from 'src/types/type';
+import { User } from 'src/user/schemas/user.schema';
 import { EditCommentDto } from './dto/edit-task-comment.dto';
+import { LeaveCommentDto } from './dto/leave-comment.dto';
 
 @Injectable()
 export class TaskCommentsService {
@@ -118,15 +118,57 @@ export class TaskCommentsService {
   }
 
   async deleteTaskComment(taskId: string, commentId: string): Promise<Message> {
+    const transactionSession = await this.connection.startSession();
     try {
+      transactionSession.startTransaction();
+      const task = await this.taskModel
+        .findById(taskId)
+        .session(transactionSession);
+      if (!task) {
+        throw new NotFoundException('Task not found');
+      }
+      const comment = task.task_comments.find(
+        (comment) => comment.id.toString() === commentId,
+      );
+      if (!comment) {
+        throw new NotFoundException('Comment not found');
+      }
+
+      const files = await this.fileModel.find({
+        _id: { $in: comment.files_id },
+      });
+      if (files?.length) {
+        await this.fileModel.deleteMany(
+          { _id: { $in: comment.files_id } },
+          { session: transactionSession },
+        );
+
+        await this.taskModel.findByIdAndUpdate(
+          taskId,
+          { $pull: { task_comments: { id: commentId } } },
+          { new: true, session: transactionSession },
+        );
+
+        await transactionSession.commitTransaction();
+        files.forEach((file) => {
+          fs.unlinkSync(file.file_path);
+        });
+        return { message: 'Task comment has been successfully deleted' };
+      }
+
       await this.taskModel.findByIdAndUpdate(
         taskId,
         { $pull: { task_comments: { id: commentId } } },
-        { new: true },
+        { new: true, session: transactionSession },
       );
+
+      await transactionSession.commitTransaction();
       return { message: 'Task comment has been successfully deleted' };
     } catch (err) {
+      await transactionSession.abortTransaction();
       throw new ConflictException('Error when deleting task comment');
+    } finally {
+      transactionSession.endSession();
     }
   }
 

@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
-import mongoose from 'mongoose';
+import * as mongoose from 'mongoose';
 import { TaskList } from 'src/tasks/schemas/task-list.schema';
 import { BaseDocument } from 'src/utils/BaseDocument';
 

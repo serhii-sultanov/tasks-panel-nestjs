@@ -8,11 +8,13 @@ import * as fs from 'fs';
 import mongoose, { Model } from 'mongoose';
 import { Message } from 'src/types/type';
 import { User } from 'src/user/schemas/user.schema';
+import { ChangeStatusDto } from './dto/change-status.dto';
 import { CreateTaskDto } from './dto/create-task.dto';
+import { EditTaskDto } from './dto/edit-task.dto';
+import { EditTaskListDto } from './dto/edit-taskList.dto';
 import { File } from './schemas/file.schema';
 import { TaskList } from './schemas/task-list.schema';
 import { Task } from './schemas/task.schema';
-import { ChangeStatusDto } from './dto/change-status.dto';
 
 @Injectable()
 export class TasksService {
@@ -153,7 +155,7 @@ export class TasksService {
       const task = await this.taskModel.findByIdAndUpdate(
         taskId,
         {
-          $set: { isOpen: false, status: changeStatusDto.status },
+          $set: { status: changeStatusDto.status },
         },
         { new: true },
       );
@@ -161,6 +163,39 @@ export class TasksService {
     } catch (err) {
       console.log(err);
       throw new ConflictException('Error when change task status');
+    }
+  }
+
+  async editTaskList(taskListId: string, editTaskListDto: EditTaskListDto) {
+    try {
+      const taskList = await this.taskListModel.findByIdAndUpdate(
+        taskListId,
+        {
+          $set: { task_list_name: editTaskListDto.newTaskListName },
+        },
+        { new: true },
+      );
+      return taskList;
+    } catch (err) {
+      throw new ConflictException('Error when edit task list name');
+    }
+  }
+
+  async editTask(taskId: string, editTaskDto: EditTaskDto) {
+    try {
+      const task = await this.taskModel.findByIdAndUpdate(
+        taskId,
+        {
+          $set: {
+            task_title: editTaskDto.newTitle,
+            task_description: editTaskDto.newDescription,
+          },
+        },
+        { new: true },
+      );
+      return task;
+    } catch (err) {
+      throw new ConflictException('Error when edit task title & description');
     }
   }
 }

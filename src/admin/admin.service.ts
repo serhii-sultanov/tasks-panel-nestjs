@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { Message } from 'src/types/type';
 import { User } from 'src/user/schemas/user.schema';
 
 @Injectable()
@@ -45,5 +46,9 @@ export class AdminService {
     } catch (err) {
       throw new ConflictException('Get paginated client error.');
     }
+  }
+
+  async deleteClient(clientId: string): Promise<Message> {
+    return { message: 'Client has been successfully deleted' };
   }
 }

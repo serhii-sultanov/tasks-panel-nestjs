@@ -26,6 +26,8 @@ import { AdminAuthGuard } from 'src/admin/guards/admin-auth.guard';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { TasksService } from './tasks.service';
 import { ChangeStatusDto } from './dto/change-status.dto';
+import { EditTaskListDto } from './dto/edit-taskList.dto';
+import { EditTaskDto } from './dto/edit-task.dto';
 
 @ApiTags('Task & File manager')
 @Controller('task')
@@ -59,29 +61,5 @@ export class TasksController {
       file.file_contentType || 'application/octet-stream',
     );
     fs.createReadStream(file.file_path).pipe(res);
-  }
-
-  @ApiOperation({ summary: 'Change task status' })
-  @ApiBearerAuth('Token')
-  @ApiOkResponse({
-    description: 'Task status has successfully changed',
-  })
-  @ApiNotFoundResponse({ description: 'Task not found' })
-  @ApiUnauthorizedResponse({
-    description: 'User does not have Token. User Unauthorized.',
-  })
-  @ApiInternalServerErrorResponse({
-    description: 'An error occurred when changing task status ',
-  })
-  @ApiConflictResponse({ description: 'User does not have any rights.' })
-  @Put('/:taskId')
-  @UseGuards(AdminAuthGuard)
-  @UsePipes(new ValidationPipe())
-  changeTaskStatus(
-    @Request() req,
-    @Body() changeStatusDto: ChangeStatusDto,
-    @Param('taskId') taskId: string,
-  ) {
-    return this.tasksService.changeTaskStatus(taskId, changeStatusDto);
   }
 }

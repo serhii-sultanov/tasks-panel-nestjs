@@ -1,11 +1,9 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
   Param,
   Post,
-  Put,
   Request,
   UploadedFiles,
   UseGuards,
@@ -25,12 +23,9 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { TaskCommentsService } from './task-comments.service';
 import { fileUploadInterceptor } from 'src/utils/fileUploadInterceptor';
 import { LeaveCommentDto } from './dto/leave-comment.dto';
-import { AdminAuthGuard } from 'src/admin/guards/admin-auth.guard';
-import { Message } from 'src/types/type';
-import { EditCommentDto } from './dto/edit-task-comment.dto';
+import { TaskCommentsService } from './task-comments.service';
 
 @ApiTags('Work with Tasks Comments')
 @Controller('comment')
@@ -84,53 +79,6 @@ export class TaskCommentsController {
       req.user.id,
       leaveCommentDto,
       files,
-    );
-  }
-
-  @ApiOperation({ summary: 'Delete task comment' })
-  @ApiBearerAuth('Token')
-  @ApiOkResponse({ description: 'Task has been succesfully deleted' })
-  @ApiConflictResponse({
-    description: 'Error when deleting the comment',
-  })
-  @ApiUnauthorizedResponse({
-    description: 'User does not have Token. User Unauthorized.',
-  })
-  @ApiNotFoundResponse({
-    description: 'Comment not found.',
-  })
-  @Delete(':taskId/:commentId')
-  @UseGuards(AdminAuthGuard)
-  deleteTaskComment(
-    @Param('taskId') taskId: string,
-    @Param('commentId') commentId: string,
-  ): Promise<Message> {
-    return this.taskCommentsService.deleteTaskComment(taskId, commentId);
-  }
-
-  @ApiOperation({ summary: 'Edit task comment' })
-  @ApiBearerAuth('Token')
-  @ApiOkResponse({ description: 'Task has been succesfully edited' })
-  @ApiConflictResponse({
-    description: 'Error when editing the comment',
-  })
-  @ApiUnauthorizedResponse({
-    description: 'User does not have Token. User Unauthorized.',
-  })
-  @ApiNotFoundResponse({
-    description: 'Comment not found.',
-  })
-  @Put(':taskId/:commentId')
-  @UseGuards(AdminAuthGuard)
-  editTaskComment(
-    @Body() editCommentDto: EditCommentDto,
-    @Param('taskId') taskId: string,
-    @Param('commentId') commentId: string,
-  ): Promise<Message> {
-    return this.taskCommentsService.editTaskComment(
-      taskId,
-      commentId,
-      editCommentDto,
     );
   }
 }

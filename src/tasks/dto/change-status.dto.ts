@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsString } from 'class-validator';
+import { IsEnum } from 'class-validator';
 
 export enum TaskStatus {
   Waiting = 'waiting for client',
