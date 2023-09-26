@@ -9,10 +9,11 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { UserService } from './user.service';
 
-@ApiTags('User Endpoints')
+@ApiTags('User Endpoints & Download files')
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}

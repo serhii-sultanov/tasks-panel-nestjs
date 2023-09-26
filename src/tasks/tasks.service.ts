@@ -12,6 +12,7 @@ import { CreateTaskDto } from './dto/create-task.dto';
 import { File } from './schemas/file.schema';
 import { TaskList } from './schemas/task-list.schema';
 import { Task } from './schemas/task.schema';
+import { ChangeStatusDto } from './dto/change-status.dto';
 
 @Injectable()
 export class TasksService {
@@ -33,9 +34,11 @@ export class TasksService {
       const client = await this.userModel
         .findById(createTaskDto.user_id)
         .session(transactionSession);
+
       if (!client) {
         throw new NotFoundException('Client Not Found');
       }
+
       const isTaskList = await this.taskListModel
         .findOne({
           user_id: createTaskDto.user_id,
@@ -142,6 +145,22 @@ export class TasksService {
       return file;
     } catch (err) {
       throw new ConflictException('Error when load file');
+    }
+  }
+
+  async changeTaskStatus(taskId: string, changeStatusDto: ChangeStatusDto) {
+    try {
+      const task = await this.taskModel.findByIdAndUpdate(
+        taskId,
+        {
+          $set: { isOpen: false, status: changeStatusDto.status },
+        },
+        { new: true },
+      );
+      return task;
+    } catch (err) {
+      console.log(err);
+      throw new ConflictException('Error when change task status');
     }
   }
 }

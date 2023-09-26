@@ -16,10 +16,6 @@ export class Task extends BaseDocument {
   @Prop()
   task_description: string;
 
-  @ApiProperty({ example: true, description: 'Is task open' })
-  @Prop({ default: true })
-  isOpen: boolean;
-
   @ApiProperty({ example: [1, 2, 3], description: 'Array of file IDs' })
   @Prop([{ type: mongoose.Schema.Types.ObjectId, ref: 'File' }])
   task_files: mongoose.Schema.Types.ObjectId[];
@@ -27,7 +23,6 @@ export class Task extends BaseDocument {
   @ApiProperty({ description: 'Array of task comments' })
   @Prop([
     {
-      _id: { type: Number, autoIncrement: true },
       user_id: {
         required: true,
         type: mongoose.Schema.Types.ObjectId,
@@ -40,13 +35,23 @@ export class Task extends BaseDocument {
     },
   ])
   task_comments: {
-    _id: number;
     user_id: User;
     comment: string;
     createdAt: Date;
     updatedAt: Date;
     files_id: mongoose.Schema.Types.ObjectId[];
   }[];
+
+  @ApiProperty({
+    example: ['waiting for client', 'needs review', 'needs review'],
+    description: 'Task status',
+  })
+  @Prop({
+    type: String,
+    enum: ['waiting for client', 'needs review', 'needs review'],
+    default: 'waiting for client',
+  })
+  status: string;
 }
 
 export const TaskSchema = SchemaFactory.createForClass(Task);

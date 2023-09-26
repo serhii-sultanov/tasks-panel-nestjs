@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Post,
-  Request,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
@@ -51,7 +50,6 @@ export class AdminTasksController {
   @UseInterceptors(fileUploadInterceptor)
   @UsePipes(new ValidationPipe())
   async createTask(
-    @Request() req,
     @Body() createTaskDto: CreateTaskDto,
     @UploadedFiles()
     files: Express.Multer.File[],

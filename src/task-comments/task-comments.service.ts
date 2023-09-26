@@ -1,9 +1,16 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import * as fs from 'fs';
 import mongoose, { Model } from 'mongoose';
 import { File } from 'src/tasks/schemas/file.schema';
 import { Task } from 'src/tasks/schemas/task.schema';
 import { User } from 'src/user/schemas/user.schema';
+import { LeaveCommentDto } from './dto/leave-comment.dto';
 
 @Injectable()
 export class TaskCommentsService {
@@ -18,8 +25,9 @@ export class TaskCommentsService {
     try {
       const taskComments = await this.taskModel.findById(taskId).populate({
         path: 'task_comments',
+        options: { sort: { createdAt: 1 } },
         populate: [
-          { path: 'user_id', select: '-password' },
+          { path: 'user_id', select: '-password -taskLists' },
           { path: 'files_id' },
         ],
       });
@@ -29,6 +37,80 @@ export class TaskCommentsService {
       throw new InternalServerErrorException(
         'Error occured when getting task comments.',
       );
+    }
+  }
+  async leaveTaskComment(
+    role: string,
+    userId: string,
+    leaveCommentDto: LeaveCommentDto,
+    files: Express.Multer.File[],
+  ) {
+    const transactionSession = await this.connection.startSession();
+    try {
+      transactionSession.startTransaction();
+      const user = await this.userModel
+        .findById(userId)
+        .session(transactionSession);
+      if (!user) {
+        throw new NotFoundException('User Not Found');
+      }
+      const task = await this.taskModel
+        .findById(leaveCommentDto.task_id)
+        .session(transactionSession);
+      if (!task) {
+        throw new NotFoundException('Task Not Found');
+      }
+      const newFilesData = files.map((file) => {
+        return {
+          file_originalName: file.originalname,
+          file_size: file.size,
+          file_path: file.path,
+          file_contentType: file.mimetype,
+        };
+      });
+      const newFiles = await this.fileModel.create(newFilesData, {
+        session: transactionSession,
+      });
+
+      const newComment = {
+        user_id: user,
+        comment: leaveCommentDto.comment,
+        files_id: newFiles,
+      };
+
+      if (role === 'admin') {
+        await this.taskModel.findByIdAndUpdate(
+          leaveCommentDto.task_id,
+          {
+            $push: { task_comments: newComment },
+          },
+          { new: true, session: transactionSession },
+        );
+        await transactionSession.commitTransaction();
+
+        return { message: 'Comment has been successfully sended.' };
+      } else {
+        await this.taskModel.findByIdAndUpdate(
+          leaveCommentDto.task_id,
+          {
+            $push: { task_comments: newComment },
+            $set: { status: 'needs review' },
+          },
+          { new: true, session: transactionSession },
+        );
+        await transactionSession.commitTransaction();
+
+        return { message: 'Comment has been successfully sended.' };
+      }
+    } catch (err) {
+      await transactionSession.abortTransaction();
+      for (const file of files) {
+        const filePath = file.path;
+        fs.unlinkSync(filePath);
+      }
+      throw new ConflictException('Error when leaving new comment');
+    } finally {
+      transactionSession.endSession();
     }
   }
 }
