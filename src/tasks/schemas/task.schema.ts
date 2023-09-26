@@ -23,6 +23,8 @@ export class Task extends BaseDocument {
   @ApiProperty({ description: 'Array of task comments' })
   @Prop([
     {
+      _id: false,
+      id: { type: mongoose.Schema.Types.ObjectId, required: true, auto: true },
       user_id: {
         required: true,
         type: mongoose.Schema.Types.ObjectId,
@@ -35,6 +37,7 @@ export class Task extends BaseDocument {
     },
   ])
   task_comments: {
+    id: mongoose.Schema.Types.ObjectId;
     user_id: User;
     comment: string;
     createdAt: Date;

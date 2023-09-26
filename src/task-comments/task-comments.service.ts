@@ -11,6 +11,8 @@ import { File } from 'src/tasks/schemas/file.schema';
 import { Task } from 'src/tasks/schemas/task.schema';
 import { User } from 'src/user/schemas/user.schema';
 import { LeaveCommentDto } from './dto/leave-comment.dto';
+import { Message } from 'src/types/type';
+import { EditCommentDto } from './dto/edit-task-comment.dto';
 
 @Injectable()
 export class TaskCommentsService {
@@ -39,6 +41,7 @@ export class TaskCommentsService {
       );
     }
   }
+
   async leaveTaskComment(
     role: string,
     userId: string,
@@ -111,6 +114,40 @@ export class TaskCommentsService {
       throw new ConflictException('Error when leaving new comment');
     } finally {
       transactionSession.endSession();
+    }
+  }
+
+  async deleteTaskComment(taskId: string, commentId: string): Promise<Message> {
+    try {
+      await this.taskModel.findByIdAndUpdate(
+        taskId,
+        { $pull: { task_comments: { id: commentId } } },
+        { new: true },
+      );
+      return { message: 'Task comment has been successfully deleted' };
+    } catch (err) {
+      throw new ConflictException('Error when deleting task comment');
+    }
+  }
+
+  async editTaskComment(
+    taskId: string,
+    commentId: string,
+    editCommentDto: EditCommentDto,
+  ) {
+    try {
+      await this.taskModel.findOneAndUpdate(
+        {
+          _id: taskId,
+          task_comments: { $elemMatch: { id: commentId } },
+        },
+        { $set: { 'task_comments.$.comment': editCommentDto.updatedComment } },
+        { new: true },
+      );
+
+      return { message: 'Task comment has been successfully edited.' };
+    } catch (err) {
+      throw new ConflictException('Error when editing task comment');
     }
   }
 }
