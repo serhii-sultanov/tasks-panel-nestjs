@@ -9,4 +9,8 @@ export class LeaveCommentDto {
   @ApiProperty()
   @IsString()
   comment: string;
+
+  @ApiProperty()
+  @IsString()
+  clientId: string;
 }

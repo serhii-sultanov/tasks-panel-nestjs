@@ -1,3 +1,4 @@
+import Mailgun from 'mailgun.js';
 import {
   ConflictException,
   Injectable,
@@ -13,6 +14,7 @@ import { Message } from 'src/types/type';
 import { User } from 'src/user/schemas/user.schema';
 import { EditCommentDto } from './dto/edit-task-comment.dto';
 import { LeaveCommentDto } from './dto/leave-comment.dto';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class TaskCommentsService {
@@ -21,7 +23,15 @@ export class TaskCommentsService {
     @InjectModel(Task.name) private taskModel: Model<Task>,
     @InjectModel(File.name) private fileModel: Model<File>,
     @InjectConnection() private readonly connection: mongoose.Connection,
+    private readonly config: ConfigService,
   ) {}
+
+  private MAILGUN_API_KEY = this.config.get<string>('MAILGUN_API_KEY');
+  private MAILGUN_DOMAIN = this.config.get<string>('MAILGUN_DOMAIN');
+  private client = new Mailgun(FormData).client({
+    username: 'api',
+    key: this.MAILGUN_API_KEY,
+  });
 
   async getTaskComments(taskId: string) {
     try {
@@ -47,10 +57,17 @@ export class TaskCommentsService {
     userId: string,
     leaveCommentDto: LeaveCommentDto,
     files: Express.Multer.File[],
+    adminName: string,
   ) {
     const transactionSession = await this.connection.startSession();
     try {
       transactionSession.startTransaction();
+      const client = await this.userModel
+        .findById(leaveCommentDto.clientId)
+        .session(transactionSession);
+      if (!client) {
+        throw new NotFoundException('Client Not Found');
+      }
       const user = await this.userModel
         .findById(userId)
         .session(transactionSession);
@@ -89,6 +106,21 @@ export class TaskCommentsService {
           },
           { new: true, session: transactionSession },
         );
+
+        const messageData = {
+          from: 'Excited User <nextech.crew@gmail.com>',
+          to: ['marchuk1992@gmail.com'],
+          subject: `Admin left comment into your task ${task.task_title}`,
+          template: 'task-client-comment',
+          't:variables': JSON.stringify({
+            clientName: client.firstName ? client.firstName : client.email,
+            message: `${
+              adminName ? adminName : 'Max'
+            } from TAX CO left comment into your task - "${task.task_title}".`,
+          }),
+        };
+        await this.client.messages.create(this.MAILGUN_DOMAIN, messageData);
+
         await transactionSession.commitTransaction();
 
         return { message: 'Comment has been successfully sended.' };
@@ -101,6 +133,22 @@ export class TaskCommentsService {
           },
           { new: true, session: transactionSession },
         );
+
+        const messageData = {
+          from: 'Excited User <nextech.crew@gmail.com>',
+          to: ['nextech.crew@gmail.com'],
+          subject: `Client ${
+            user.firstName ? user.firstName : user.email
+          } left comment`,
+          template: 'task-comment',
+          't:variables': JSON.stringify({
+            adminName: adminName ? adminName : 'Max',
+            message: `Client left comment into task - "${task.task_title}". Task status: Needs review.`,
+          }),
+        };
+
+        await this.client.messages.create(this.MAILGUN_DOMAIN, messageData);
+
         await transactionSession.commitTransaction();
 
         return { message: 'Comment has been successfully sended.' };

@@ -7,6 +7,7 @@ import {
   UploadedFiles,
   UseGuards,
   UseInterceptors,
+  Request,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -57,11 +58,16 @@ export class AdminTasksController {
   @UseInterceptors(fileUploadInterceptor)
   @UsePipes(new ValidationPipe())
   async createTask(
+    @Request() req,
     @Body() createTaskDto: CreateTaskDto,
     @UploadedFiles()
     files: Express.Multer.File[],
   ): Promise<Message> {
-    return this.tasksService.createTask(createTaskDto, files);
+    return this.tasksService.createTask(
+      createTaskDto,
+      files,
+      req.user.firstName,
+    );
   }
 
   @ApiOperation({ summary: 'Change task status' })
@@ -81,10 +87,15 @@ export class AdminTasksController {
   @UseGuards(AdminAuthGuard)
   @UsePipes(new ValidationPipe())
   changeTaskStatus(
+    @Request() req,
     @Body() changeStatusDto: ChangeStatusDto,
     @Param('taskId') taskId: string,
   ) {
-    return this.tasksService.changeTaskStatus(taskId, changeStatusDto);
+    return this.tasksService.changeTaskStatus(
+      taskId,
+      changeStatusDto,
+      req.user.firstName,
+    );
   }
 
   @ApiOperation({ summary: 'Edit task list name' })

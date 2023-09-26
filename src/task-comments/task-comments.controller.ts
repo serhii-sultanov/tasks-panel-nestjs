@@ -79,6 +79,7 @@ export class TaskCommentsController {
       req.user.id,
       leaveCommentDto,
       files,
+      req.user.firstName,
     );
   }
 }

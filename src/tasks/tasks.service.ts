@@ -15,6 +15,8 @@ import { EditTaskListDto } from './dto/edit-taskList.dto';
 import { File } from './schemas/file.schema';
 import { TaskList } from './schemas/task-list.schema';
 import { Task } from './schemas/task.schema';
+import { ConfigService } from '@nestjs/config';
+import Mailgun from 'mailgun.js';
 
 @Injectable()
 export class TasksService {
@@ -24,11 +26,20 @@ export class TasksService {
     @InjectModel(TaskList.name) private taskListModel: Model<TaskList>,
     @InjectModel(File.name) private fileModel: Model<File>,
     @InjectConnection() private readonly connection: mongoose.Connection,
+    private readonly config: ConfigService,
   ) {}
+
+  private MAILGUN_API_KEY = this.config.get<string>('MAILGUN_API_KEY');
+  private MAILGUN_DOMAIN = this.config.get<string>('MAILGUN_DOMAIN');
+  private client = new Mailgun(FormData).client({
+    username: 'api',
+    key: this.MAILGUN_API_KEY,
+  });
 
   async createTask(
     createTaskDto: CreateTaskDto,
     files: Express.Multer.File[],
+    adminName: string,
   ): Promise<Message> {
     const transactionSession = await this.connection.startSession();
     try {
@@ -84,6 +95,20 @@ export class TasksService {
           { session: transactionSession },
         );
 
+        const messageData = {
+          from: 'Excited User <nextech.crew@gmail.com>',
+          to: ['marchuk1992@gmail.com'],
+          subject: `Added new task list - ${createTaskDto.task_list_name} with task ${createTaskDto.task_title}`,
+          template: 'test',
+          't:variables': JSON.stringify({
+            clientName: client.firstName ? client.firstName : client.email,
+            adminName: adminName ? adminName : 'Max',
+            taskListName: createTaskDto.task_list_name,
+          }),
+        };
+
+        await this.client.messages.create(this.MAILGUN_DOMAIN, messageData);
+
         await transactionSession.commitTransaction();
 
         return { message: 'Task list and task has been succesfully created' };
@@ -103,6 +128,20 @@ export class TasksService {
           { new: true, session: transactionSession },
         );
 
+        const messageData = {
+          from: 'Excited User <nextech.crew@gmail.com>',
+          to: ['marchuk1992@gmail.com'],
+          subject: `In the task (${isTask.task_title}) has been loaded new file(s)`,
+          template: 'test',
+          't:variables': JSON.stringify({
+            clientName: client.firstName ? client.firstName : client.email,
+            adminName: adminName ? adminName : 'Max',
+            taskListName: isTaskList.task_list_name,
+          }),
+        };
+
+        await this.client.messages.create(this.MAILGUN_DOMAIN, messageData);
+
         await transactionSession.commitTransaction();
         return { message: 'Task Updated' };
       } else {
@@ -121,6 +160,20 @@ export class TasksService {
           { $push: { task_list: createTask } },
           { session: transactionSession },
         );
+
+        const messageData = {
+          from: 'Excited User <nextech.crew@gmail.com>',
+          to: ['marchuk1992@gmail.com'],
+          subject: 'New task added',
+          template: 'test',
+          't:variables': JSON.stringify({
+            clientName: client.firstName ? client.firstName : client.email,
+            adminName: adminName ? adminName : 'Max',
+            taskListName: isTaskList.task_list_name,
+          }),
+        };
+
+        await this.client.messages.create(this.MAILGUN_DOMAIN, messageData);
 
         await transactionSession.commitTransaction();
         return { message: 'Task created and added into Task List' };
@@ -150,8 +203,17 @@ export class TasksService {
     }
   }
 
-  async changeTaskStatus(taskId: string, changeStatusDto: ChangeStatusDto) {
+  async changeTaskStatus(
+    taskId: string,
+    changeStatusDto: ChangeStatusDto,
+    adminName: string,
+  ) {
     try {
+      const client = await this.userModel.findById(changeStatusDto.userId);
+      if (!client) {
+        throw new NotFoundException('Client for this task not found');
+      }
+
       const task = await this.taskModel.findByIdAndUpdate(
         taskId,
         {
@@ -159,9 +221,23 @@ export class TasksService {
         },
         { new: true },
       );
+
+      const messageData = {
+        from: 'Excited User <nextech.crew@gmail.com>',
+        to: ['marchuk1992@gmail.com'],
+        subject: `Task (${task.task_title}) change status`,
+        template: 'test2',
+        't:variables': JSON.stringify({
+          clientName: client.firstName ? client.firstName : client.email,
+          adminName: adminName ? adminName : 'Max',
+          status: changeStatusDto.status,
+        }),
+      };
+
+      await this.client.messages.create(this.MAILGUN_DOMAIN, messageData);
+
       return task;
     } catch (err) {
-      console.log(err);
       throw new ConflictException('Error when change task status');
     }
   }

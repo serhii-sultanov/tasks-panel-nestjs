@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum } from 'class-validator';
+import { IsEnum, IsString } from 'class-validator';
 
 export enum TaskStatus {
   Waiting = 'waiting for client',
@@ -11,4 +11,8 @@ export class ChangeStatusDto {
   @ApiProperty()
   @IsEnum(TaskStatus)
   status: TaskStatus;
+
+  @ApiProperty()
+  @IsString()
+  userId: string;
 }
