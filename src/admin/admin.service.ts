@@ -109,6 +109,23 @@ export class AdminService {
     }
   }
 
+  async searchUsers(query: string): Promise<User[]> {
+    try {
+      const users = await this.userModel.find({
+        $or: [
+          { firstName: { $regex: query, $options: 'i' } },
+          { lastName: { $regex: query, $options: 'i' } },
+          { email: { $regex: query, $options: 'i' } },
+        ],
+      });
+      return users;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'An error occurred when searching users.',
+      );
+    }
+  }
+
   async deleteClient(clientId: string): Promise<Message> {
     return { message: 'Client has been successfully deleted' };
   }

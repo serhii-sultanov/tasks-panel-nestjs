@@ -31,6 +31,7 @@ import { AdminService } from './admin.service';
 import { ChangeClientRoleDto } from './dto/change-client-role.dto';
 import { AdminAuthGuard } from './guards/admin-auth.guard';
 import { AdminRegisterUserDto } from './dto/admin-register-client.dto';
+import { User } from 'src/user/schemas/user.schema';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard)
@@ -77,6 +78,25 @@ export class AdminController {
     @Query('pageSize') pageSize: number = 10,
   ) {
     return this.adminService.getPaginatedClients(page, pageSize);
+  }
+
+  @ApiOperation({ summary: 'Search Users by firstName-lastName-email' })
+  @ApiBearerAuth('Token')
+  @ApiOkResponse({
+    description: 'Users have been successfully searched',
+  })
+  @ApiNotFoundResponse({ description: 'Users do not exist.' })
+  @ApiUnauthorizedResponse({
+    description: 'User does not have Token. User Unauthorized.',
+  })
+  @ApiConflictResponse({ description: 'User does not have any rights.' })
+  @ApiInternalServerErrorResponse({
+    description: 'An error occurred when searching users.',
+  })
+  @Get('search')
+  @UseGuards(AdminAuthGuard)
+  searchUsers(@Query('q') query: string): Promise<User[]> {
+    return this.adminService.searchUsers(query);
   }
 
   @ApiOperation({ summary: 'Delete client' })
