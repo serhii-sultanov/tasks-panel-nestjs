@@ -13,6 +13,7 @@ import { RegisterUserDto } from 'src/auth/dto/register-user.dto';
 import { Token } from 'src/types/type';
 import { User } from './schemas/user.schema';
 import { UpdateClientDataDto } from './dto/update-client.dto';
+import { ChangeUserPasswordDto } from './dto/change-client-password.dto';
 
 @Injectable()
 export class UserService {
@@ -97,6 +98,33 @@ export class UserService {
     } catch (err) {
       throw new ConflictException(
         'Error when updating the client personal data',
+      );
+    }
+  }
+
+  async changeUserPassword(
+    userId: string,
+    changeUserPasswordDto: ChangeUserPasswordDto,
+  ) {
+    try {
+      const user = await this.userModel.findById(userId);
+      if (!user) {
+        throw new NotFoundException('User not Found');
+      }
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(
+        changeUserPasswordDto.password,
+        salt,
+      );
+
+      await this.userModel.findByIdAndUpdate(userId, {
+        $set: { password: hashedPassword },
+      });
+
+      return { message: 'Password has been successfully changed.' };
+    } catch (err) {
+      throw new InternalServerErrorException(
+        'An error occurred when changed the user password',
       );
     }
   }

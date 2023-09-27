@@ -5,23 +5,32 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Message } from 'src/types/type';
-import * as bcrypt from 'bcryptjs';
-import { User } from 'src/user/schemas/user.schema';
-import { ChangeClientRoleDto } from './dto/change-client-role.dto';
-import { RegisterUserDto } from 'src/auth/dto/register-user.dto';
 import { ConfigService } from '@nestjs/config';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import * as bcrypt from 'bcryptjs';
 import Mailgun from 'mailgun.js';
+import * as fs from 'fs';
+import mongoose, { Model, ObjectId } from 'mongoose';
+import { File } from 'src/tasks/schemas/file.schema';
+import { TaskList } from 'src/tasks/schemas/task-list.schema';
+import { Task } from 'src/tasks/schemas/task.schema';
+import { Message } from 'src/types/type';
+import { User } from 'src/user/schemas/user.schema';
 import { AdminRegisterUserDto } from './dto/admin-register-client.dto';
+import { ChangeClientRoleDto } from './dto/change-client-role.dto';
+import { DeleteTaskListDto } from './dto/delete-tasklist.dto';
 
 @Injectable()
 export class AdminService {
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
+    @InjectModel(TaskList.name) private taskListModel: Model<TaskList>,
+    @InjectModel(Task.name) private taskModel: Model<Task>,
+    @InjectModel(File.name) private fileModel: Model<File>,
+    @InjectConnection() private readonly connection: mongoose.Connection,
     private readonly config: ConfigService,
   ) {}
+
   private MAILGUN_API_KEY = this.config.get<string>('MAILGUN_API_KEY');
   private MAILGUN_DOMAIN = this.config.get<string>('MAILGUN_DOMAIN');
   private client = new Mailgun(FormData).client({
@@ -127,7 +136,86 @@ export class AdminService {
   }
 
   async deleteClient(clientId: string): Promise<Message> {
-    return { message: 'Client has been successfully deleted' };
+    const transactionSession = await this.connection.startSession();
+    try {
+      transactionSession.startTransaction();
+      const user = await this.userModel
+        .findById(clientId)
+        .populate({
+          path: 'taskLists',
+          model: 'TaskList',
+          populate: {
+            path: 'task_list',
+            model: 'Task',
+            populate: {
+              path: 'task_files',
+              model: 'File',
+            },
+          },
+        })
+        .session(transactionSession)
+        .exec();
+
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      const fileArr = [];
+
+      for (const taskList of user.taskLists) {
+        for (const task of taskList.task_list) {
+          for (const comment of task.task_comments) {
+            for (const fileId of comment.files_id) {
+              const file = await this.fileModel
+                .findById(fileId)
+                .session(transactionSession)
+                .exec();
+              if (file) {
+                await this.fileModel
+                  .findByIdAndDelete(file.id)
+                  .session(transactionSession);
+                const filePath = file.file_path;
+                fileArr.push(filePath);
+              }
+            }
+          }
+          for (const fileId of task.task_files) {
+            const file = await this.fileModel
+              .findById(fileId)
+              .session(transactionSession)
+              .exec();
+            if (file) {
+              await this.fileModel
+                .findByIdAndDelete(file.id)
+                .session(transactionSession);
+              const filePath = file.file_path;
+              fileArr.push(filePath);
+            }
+          }
+          await this.taskModel
+            .findByIdAndDelete(task.id)
+            .session(transactionSession);
+        }
+        await this.taskListModel
+          .findByIdAndDelete(taskList.id)
+          .session(transactionSession);
+      }
+
+      await this.userModel
+        .findByIdAndDelete(clientId)
+        .session(transactionSession);
+
+      await transactionSession.commitTransaction();
+
+      fileArr.forEach((file) => fs.unlinkSync(file));
+
+      return { message: 'Client has been successfully deleted' };
+    } catch (err) {
+      await transactionSession.abortTransaction();
+      throw new ConflictException('Error when deleting User account');
+    } finally {
+      transactionSession.endSession();
+    }
   }
 
   async changeClientRole(
@@ -141,6 +229,90 @@ export class AdminService {
       return { message: 'Client role has been successfully changed.' };
     } catch (err) {
       throw new ConflictException('Error when changing the client role');
+    }
+  }
+
+  async deleteTaskList(
+    taskListId: string,
+    deleteTaskListDto: DeleteTaskListDto,
+  ): Promise<Message> {
+    const transactionSession = await this.connection.startSession();
+
+    try {
+      transactionSession.startTransaction();
+      const taskList = await this.taskListModel
+        .findById(taskListId)
+        .populate({
+          path: 'task_list',
+          model: 'Task',
+          populate: {
+            path: 'task_files',
+            model: 'File',
+          },
+        })
+        .session(transactionSession)
+        .exec();
+
+      if (!taskList) {
+        throw new NotFoundException('Task list not found');
+      }
+      const fileArr = [];
+
+      for (const task of taskList.task_list) {
+        for (const comment of task.task_comments) {
+          for (const fileId of comment.files_id) {
+            const file = await this.fileModel
+              .findById(fileId)
+              .session(transactionSession)
+              .exec();
+            if (file) {
+              await this.fileModel
+                .findByIdAndDelete(file.id)
+                .session(transactionSession);
+              const filePath = file.file_path;
+              fileArr.push(filePath);
+            }
+          }
+        }
+        for (const fileId of task.task_files) {
+          const file = await this.fileModel
+            .findById(fileId)
+            .session(transactionSession)
+            .exec();
+          if (file) {
+            await this.fileModel
+              .findByIdAndDelete(file.id)
+              .session(transactionSession);
+            const filePath = file.file_path;
+            fileArr.push(filePath);
+          }
+        }
+        await this.taskModel
+          .findByIdAndDelete(task.id)
+          .session(transactionSession);
+      }
+
+      await this.userModel
+        .findByIdAndUpdate(deleteTaskListDto.userId, {
+          $pull: { taskLists: taskList.id },
+        })
+        .session(transactionSession);
+
+      await this.taskListModel
+        .findByIdAndDelete(taskListId)
+        .session(transactionSession);
+
+      await transactionSession.commitTransaction();
+
+      fileArr.forEach((file) => fs.unlinkSync(file));
+
+      return { message: 'Task list has been successfully deleted' };
+    } catch (err) {
+      await transactionSession.abortTransaction();
+
+      throw new ConflictException('Error occured when deleting task list');
+    } finally {
+      transactionSession.endSession();
     }
   }
 }

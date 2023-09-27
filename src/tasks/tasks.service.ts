@@ -3,8 +3,10 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import * as fs from 'fs';
+import Mailgun from 'mailgun.js';
 import mongoose, { Model } from 'mongoose';
 import { Message } from 'src/types/type';
 import { User } from 'src/user/schemas/user.schema';
@@ -15,8 +17,6 @@ import { EditTaskListDto } from './dto/edit-taskList.dto';
 import { File } from './schemas/file.schema';
 import { TaskList } from './schemas/task-list.schema';
 import { Task } from './schemas/task.schema';
-import { ConfigService } from '@nestjs/config';
-import Mailgun from 'mailgun.js';
 
 @Injectable()
 export class TasksService {

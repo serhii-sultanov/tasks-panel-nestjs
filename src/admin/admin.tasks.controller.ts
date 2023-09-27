@@ -10,6 +10,7 @@ import {
   Request,
   UsePipes,
   ValidationPipe,
+  Delete,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -32,12 +33,17 @@ import { TasksService } from 'src/tasks/tasks.service';
 import { Message } from 'src/types/type';
 import { fileUploadInterceptor } from 'src/utils/fileUploadInterceptor';
 import { AdminAuthGuard } from './guards/admin-auth.guard';
+import { DeleteTaskListDto } from './dto/delete-tasklist.dto';
+import { AdminService } from './admin.service';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard)
 @ApiTags('Admin Endpoints')
 export class AdminTasksController {
-  constructor(private readonly tasksService: TasksService) {}
+  constructor(
+    private readonly tasksService: TasksService,
+    private readonly adminService: AdminService,
+  ) {}
 
   @ApiOperation({ summary: 'Create new task' })
   @ApiBearerAuth('Token')
@@ -138,5 +144,26 @@ export class AdminTasksController {
   @UsePipes(new ValidationPipe())
   editTask(@Body() editTaskDto: EditTaskDto, @Param('taskId') taskId: string) {
     return this.tasksService.editTask(taskId, editTaskDto);
+  }
+
+  @ApiOperation({ summary: 'Delete task list' })
+  @ApiBearerAuth('Token')
+  @ApiOkResponse({ description: 'Task list has been succesfully deleted' })
+  @ApiConflictResponse({
+    description: 'Error when deleting the task list',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'User does not have Token. User Unauthorized.',
+  })
+  @ApiNotFoundResponse({
+    description: 'Client or task list not found.',
+  })
+  @Delete('/taskList/:taskListId')
+  @UseGuards(AdminAuthGuard)
+  deleteTaskList(
+    @Body() deleteTaskListDto: DeleteTaskListDto,
+    @Param('taskListId') taskListId: string,
+  ): Promise<Message> {
+    return this.adminService.deleteTaskList(taskListId, deleteTaskListDto);
   }
 }

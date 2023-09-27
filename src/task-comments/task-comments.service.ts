@@ -1,12 +1,13 @@
-import Mailgun from 'mailgun.js';
 import {
   ConflictException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import * as fs from 'fs';
+import Mailgun from 'mailgun.js';
 import mongoose, { Model } from 'mongoose';
 import { File } from 'src/tasks/schemas/file.schema';
 import { Task } from 'src/tasks/schemas/task.schema';
@@ -14,7 +15,6 @@ import { Message } from 'src/types/type';
 import { User } from 'src/user/schemas/user.schema';
 import { EditCommentDto } from './dto/edit-task-comment.dto';
 import { LeaveCommentDto } from './dto/leave-comment.dto';
-import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class TaskCommentsService {

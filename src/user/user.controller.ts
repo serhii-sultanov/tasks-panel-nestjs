@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Put, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Put,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiConflictResponse,
@@ -13,8 +21,9 @@ import {
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { UpdateClientDataDto } from './dto/update-client.dto';
 import { UserService } from './user.service';
+import { ChangeUserPasswordDto } from './dto/change-client-password.dto';
 
-@ApiTags('User Endpoints & Download files')
+@ApiTags('User Endpoints')
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
@@ -58,5 +67,30 @@ export class UserController {
     @Param('userId') userId: string,
   ) {
     return this.userService.updateClientData(userId, updateClientDataDto);
+  }
+
+  @ApiOperation({ summary: 'Change Password' })
+  @ApiBearerAuth('Token')
+  @ApiOkResponse({
+    description: 'User has been successfully changed password.',
+  })
+  @ApiNotFoundResponse({ description: 'User not found' })
+  @ApiUnauthorizedResponse({
+    description: 'User does not have Token. User Unauthorized.',
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'An error occurred when changed the user password',
+  })
+  @ApiConflictResponse({ description: 'User does not have any rights.' })
+  @Put('password')
+  @UseGuards(JwtAuthGuard)
+  changeUserPassword(
+    @Request() req,
+    @Body() changeUserPasswordDto: ChangeUserPasswordDto,
+  ) {
+    return this.userService.changeUserPassword(
+      req.user.id,
+      changeUserPasswordDto,
+    );
   }
 }

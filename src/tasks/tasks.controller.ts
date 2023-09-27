@@ -1,33 +1,15 @@
+import { Controller, Get, Param, Res, UseGuards } from '@nestjs/common';
 import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Put,
-  Request,
-  Res,
-  UseGuards,
-  UsePipes,
-  ValidationPipe,
-} from '@nestjs/common';
-import {
-  ApiBearerAuth,
   ApiConflictResponse,
-  ApiInternalServerErrorResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
-  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Response } from 'express';
 import * as fs from 'fs';
-import { AdminAuthGuard } from 'src/admin/guards/admin-auth.guard';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { TasksService } from './tasks.service';
-import { ChangeStatusDto } from './dto/change-status.dto';
-import { EditTaskListDto } from './dto/edit-taskList.dto';
-import { EditTaskDto } from './dto/edit-task.dto';
 
 @ApiTags('Task & File manager')
 @Controller('task')

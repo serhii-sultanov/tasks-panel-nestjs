@@ -24,14 +24,13 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { RegisterUserDto } from 'src/auth/dto/register-user.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { Message } from 'src/types/type';
+import { User } from 'src/user/schemas/user.schema';
 import { AdminService } from './admin.service';
+import { AdminRegisterUserDto } from './dto/admin-register-client.dto';
 import { ChangeClientRoleDto } from './dto/change-client-role.dto';
 import { AdminAuthGuard } from './guards/admin-auth.guard';
-import { AdminRegisterUserDto } from './dto/admin-register-client.dto';
-import { User } from 'src/user/schemas/user.schema';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard)
