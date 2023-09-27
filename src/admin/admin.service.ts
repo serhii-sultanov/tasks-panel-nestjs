@@ -8,9 +8,9 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcryptjs';
-import Mailgun from 'mailgun.js';
 import * as fs from 'fs';
-import mongoose, { Model, ObjectId } from 'mongoose';
+import Mailgun from 'mailgun.js';
+import mongoose, { Model } from 'mongoose';
 import { File } from 'src/tasks/schemas/file.schema';
 import { TaskList } from 'src/tasks/schemas/task-list.schema';
 import { Task } from 'src/tasks/schemas/task.schema';
@@ -18,7 +18,9 @@ import { Message } from 'src/types/type';
 import { User } from 'src/user/schemas/user.schema';
 import { AdminRegisterUserDto } from './dto/admin-register-client.dto';
 import { ChangeClientRoleDto } from './dto/change-client-role.dto';
+import { DeleteTaskDto } from './dto/delete-task.dto';
 import { DeleteTaskListDto } from './dto/delete-tasklist.dto';
+import { DeleteFileDto } from './dto/delete-file.dto';
 
 @Injectable()
 export class AdminService {
@@ -311,6 +313,116 @@ export class AdminService {
       await transactionSession.abortTransaction();
 
       throw new ConflictException('Error occured when deleting task list');
+    } finally {
+      transactionSession.endSession();
+    }
+  }
+
+  async deleteTask(
+    taskId: string,
+    deleteTaskDto: DeleteTaskDto,
+  ): Promise<Message> {
+    const transactionSession = await this.connection.startSession();
+
+    try {
+      transactionSession.startTransaction();
+      const task = await this.taskModel
+        .findById(taskId)
+        .populate({
+          path: 'task_files',
+          model: 'File',
+        })
+        .session(transactionSession)
+        .exec();
+
+      if (!task) {
+        throw new NotFoundException('Task not found');
+      }
+      const fileArr = [];
+
+      for (const comment of task.task_comments) {
+        for (const fileId of comment.files_id) {
+          const file = await this.fileModel
+            .findById(fileId)
+            .session(transactionSession)
+            .exec();
+          if (file) {
+            await this.fileModel
+              .findByIdAndDelete(file.id)
+              .session(transactionSession);
+            const filePath = file.file_path;
+            fileArr.push(filePath);
+          }
+        }
+      }
+      for (const fileId of task.task_files) {
+        const file = await this.fileModel
+          .findById(fileId)
+          .session(transactionSession)
+          .exec();
+        if (file) {
+          await this.fileModel
+            .findByIdAndDelete(file.id)
+            .session(transactionSession);
+          const filePath = file.file_path;
+          fileArr.push(filePath);
+        }
+      }
+
+      await this.taskListModel
+        .findByIdAndUpdate(deleteTaskDto.taskListId, {
+          $pull: { task_list: task.id },
+        })
+        .session(transactionSession);
+
+      await this.taskModel
+        .findByIdAndDelete(taskId)
+        .session(transactionSession);
+
+      fileArr.forEach((file) => fs.unlinkSync(file));
+
+      await transactionSession.commitTransaction();
+
+      return { message: 'Task has been successfully deleted' };
+    } catch (err) {
+      await transactionSession.abortTransaction();
+      throw new ConflictException('Error occured when deleting task');
+    } finally {
+      transactionSession.endSession();
+    }
+  }
+
+  async deleteFile(
+    fileId: string,
+    deleteFileDto: DeleteFileDto,
+  ): Promise<Message> {
+    const transactionSession = await this.connection.startSession();
+    try {
+      transactionSession.startTransaction();
+      const file = await this.fileModel
+        .findById(fileId)
+        .session(transactionSession);
+      if (!file) {
+        throw new NotFoundException('File not found');
+      }
+
+      await this.taskModel
+        .findByIdAndUpdate(deleteFileDto.taskId, {
+          $pull: { task_files: file.id },
+        })
+        .session(transactionSession);
+
+      await this.fileModel
+        .findByIdAndDelete(fileId)
+        .session(transactionSession);
+
+      await transactionSession.commitTransaction();
+
+      fs.unlinkSync(file.file_path);
+      return { message: 'File has been successfully deleted' };
+    } catch (err) {
+      await transactionSession.abortTransaction();
+      throw new ConflictException('Error occured when deleting file');
     } finally {
       transactionSession.endSession();
     }

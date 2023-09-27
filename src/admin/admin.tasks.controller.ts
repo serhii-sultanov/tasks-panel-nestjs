@@ -35,6 +35,8 @@ import { fileUploadInterceptor } from 'src/utils/fileUploadInterceptor';
 import { AdminAuthGuard } from './guards/admin-auth.guard';
 import { DeleteTaskListDto } from './dto/delete-tasklist.dto';
 import { AdminService } from './admin.service';
+import { DeleteTaskDto } from './dto/delete-task.dto';
+import { DeleteFileDto } from './dto/delete-file.dto';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard)
@@ -165,5 +167,47 @@ export class AdminTasksController {
     @Param('taskListId') taskListId: string,
   ): Promise<Message> {
     return this.adminService.deleteTaskList(taskListId, deleteTaskListDto);
+  }
+
+  @ApiOperation({ summary: 'Delete task' })
+  @ApiBearerAuth('Token')
+  @ApiOkResponse({ description: 'Task has been succesfully deleted' })
+  @ApiConflictResponse({
+    description: 'Error when deleting the task',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'User does not have Token. User Unauthorized.',
+  })
+  @ApiNotFoundResponse({
+    description: 'Task not found.',
+  })
+  @Delete('/task/:taskId')
+  @UseGuards(AdminAuthGuard)
+  deleteTask(
+    @Body() deleteTaskDto: DeleteTaskDto,
+    @Param('taskId') taskId: string,
+  ): Promise<Message> {
+    return this.adminService.deleteTask(taskId, deleteTaskDto);
+  }
+
+  @ApiOperation({ summary: 'Delete File from Task' })
+  @ApiBearerAuth('Token')
+  @ApiOkResponse({ description: 'File has been succesfully deleted' })
+  @ApiConflictResponse({
+    description: 'Error when deleting the file',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'User does not have Token. User Unauthorized.',
+  })
+  @ApiNotFoundResponse({
+    description: 'File not found.',
+  })
+  @Delete('/file/:fileId')
+  @UseGuards(AdminAuthGuard)
+  deleteFile(
+    @Body() deleteFileDto: DeleteFileDto,
+    @Param('fileId') fileId: string,
+  ): Promise<Message> {
+    return this.adminService.deleteFile(fileId, deleteFileDto);
   }
 }
