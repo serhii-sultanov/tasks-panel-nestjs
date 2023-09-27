@@ -7,6 +7,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Message } from 'src/types/type';
 import { User } from 'src/user/schemas/user.schema';
+import { ChangeClientRoleDto } from './dto/change-client-role.dto';
 
 @Injectable()
 export class AdminService {
@@ -50,5 +51,19 @@ export class AdminService {
 
   async deleteClient(clientId: string): Promise<Message> {
     return { message: 'Client has been successfully deleted' };
+  }
+
+  async changeClientRole(
+    clientId: string,
+    changeClientRoleDto: ChangeClientRoleDto,
+  ): Promise<Message> {
+    try {
+      await this.userModel.findByIdAndUpdate(clientId, {
+        $set: { role: changeClientRoleDto.newRole },
+      });
+      return { message: 'Client role has been successfully changed.' };
+    } catch (err) {
+      throw new ConflictException('Error when changing the client role');
+    }
   }
 }

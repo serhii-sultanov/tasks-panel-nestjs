@@ -1,8 +1,10 @@
 import {
+  Body,
   Controller,
   Delete,
   Get,
   Param,
+  Put,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -19,6 +21,7 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { AdminService } from './admin.service';
 import { AdminAuthGuard } from './guards/admin-auth.guard';
 import { Message } from 'src/types/type';
+import { ChangeClientRoleDto } from './dto/change-client-role.dto';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard)
@@ -61,5 +64,26 @@ export class AdminController {
   @UseGuards(AdminAuthGuard)
   deleteClient(@Param('clientId') clientId: string): Promise<Message> {
     return this.adminService.deleteClient(clientId);
+  }
+
+  @ApiOperation({ summary: 'Change client role' })
+  @ApiBearerAuth('Token')
+  @ApiOkResponse({ description: 'Client role has been succesfully changed' })
+  @ApiConflictResponse({
+    description: 'Error when changing the client role',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'User does not have Token. User Unauthorized.',
+  })
+  @ApiNotFoundResponse({
+    description: 'Client not found.',
+  })
+  @Put('/role/:clientId')
+  @UseGuards(AdminAuthGuard)
+  changeClientRole(
+    @Body() changeClientRoleDto: ChangeClientRoleDto,
+    @Param('clientId') clientId: string,
+  ): Promise<Message> {
+    return this.adminService.changeClientRole(clientId, changeClientRoleDto);
   }
 }
