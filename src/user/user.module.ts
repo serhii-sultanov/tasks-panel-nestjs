@@ -6,7 +6,6 @@ import { JwtStrategy } from 'src/auth/strategies/jwt.strategy';
 import { User, UserSchema } from './schemas/user.schema';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
-import { File, FileSchema } from 'src/tasks/schemas/file.schema';
 
 @Module({
   imports: [

@@ -4,30 +4,61 @@ import {
   Delete,
   Get,
   Param,
+  Post,
   Put,
   Query,
+  Request,
   UseGuards,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import {
+  ApiBadRequestResponse,
   ApiBearerAuth,
   ApiConflictResponse,
+  ApiCreatedResponse,
+  ApiInternalServerErrorResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { RegisterUserDto } from 'src/auth/dto/register-user.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { AdminService } from './admin.service';
-import { AdminAuthGuard } from './guards/admin-auth.guard';
 import { Message } from 'src/types/type';
+import { AdminService } from './admin.service';
 import { ChangeClientRoleDto } from './dto/change-client-role.dto';
+import { AdminAuthGuard } from './guards/admin-auth.guard';
+import { AdminRegisterUserDto } from './dto/admin-register-client.dto';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard)
 @ApiTags('Admin Endpoints')
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
+
+  @ApiOperation({ summary: 'Registration new client' })
+  @ApiBearerAuth('Token')
+  @ApiCreatedResponse({
+    description: 'Client has been successfully created.',
+  })
+  @ApiBadRequestResponse({ description: 'This email is already existed!' })
+  @ApiInternalServerErrorResponse({
+    description: 'An error occurred when saving the new Client.',
+  })
+  @Post('registration')
+  @UseGuards(AdminAuthGuard)
+  @UsePipes(new ValidationPipe())
+  newClientRegistration(
+    @Request() req,
+    @Body() registerUserDto: AdminRegisterUserDto,
+  ): Promise<Message> {
+    return this.adminService.newClientRegistration(
+      registerUserDto,
+      req.user.firstName,
+    );
+  }
 
   @ApiOperation({ summary: 'Get Paginated Clients' })
   @ApiBearerAuth('Token')

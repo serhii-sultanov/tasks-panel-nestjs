@@ -36,6 +36,7 @@ export class UserService {
         email: registerUserDto.email,
         password: hashedPassword,
       });
+
       const token = this.jwtService.sign({ email: registerUserDto.email });
       return { token };
     } catch (err) {

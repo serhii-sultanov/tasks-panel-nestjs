@@ -11,8 +11,8 @@ import {
 } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { UserService } from './user.service';
 import { UpdateClientDataDto } from './dto/update-client.dto';
+import { UserService } from './user.service';
 
 @ApiTags('User Endpoints & Download files')
 @Controller('user')
