@@ -12,6 +12,7 @@ import { Model } from 'mongoose';
 import { RegisterUserDto } from 'src/auth/dto/register-user.dto';
 import { Token } from 'src/types/type';
 import { User } from './schemas/user.schema';
+import { UpdateClientDataDto } from './dto/update-client.dto';
 
 @Injectable()
 export class UserService {
@@ -77,6 +78,24 @@ export class UserService {
     } catch (err) {
       throw new InternalServerErrorException(
         'An error occurred when getting the client account.',
+      );
+    }
+  }
+
+  async updateClientData(
+    userId: string,
+    updateClientDataDto: UpdateClientDataDto,
+  ) {
+    try {
+      const client = await this.userModel.findByIdAndUpdate(
+        userId,
+        updateClientDataDto,
+        { new: true },
+      );
+      return client;
+    } catch (err) {
+      throw new ConflictException(
+        'Error when updating the client personal data',
       );
     }
   }

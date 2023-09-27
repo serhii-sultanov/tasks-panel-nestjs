@@ -1,4 +1,4 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Put, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiConflictResponse,
@@ -12,6 +12,7 @@ import {
 
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { UserService } from './user.service';
+import { UpdateClientDataDto } from './dto/update-client.dto';
 
 @ApiTags('User Endpoints & Download files')
 @Controller('user')
@@ -35,5 +36,27 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   getClientAccount(@Param('userId') userId: string) {
     return this.userService.getClientAccount(userId);
+  }
+
+  @ApiOperation({ summary: 'Update client personal data' })
+  @ApiBearerAuth('Token')
+  @ApiOkResponse({
+    description: 'Client personal data has been successfully updated.',
+  })
+  @ApiNotFoundResponse({ description: 'Client not found' })
+  @ApiUnauthorizedResponse({
+    description: 'User does not have Token. User Unauthorized.',
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'An error occurred when updating the client personal data',
+  })
+  @ApiConflictResponse({ description: 'User does not have any rights.' })
+  @Put('account/:userId')
+  @UseGuards(JwtAuthGuard)
+  updateClientData(
+    @Body() updateClientDataDto: UpdateClientDataDto,
+    @Param('userId') userId: string,
+  ) {
+    return this.userService.updateClientData(userId, updateClientDataDto);
   }
 }
