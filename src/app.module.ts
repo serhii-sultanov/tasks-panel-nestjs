@@ -11,6 +11,8 @@ import { AuthModule } from './auth/auth.module';
 import { TasksModule } from './tasks/tasks.module';
 import { AdminModule } from './admin/admin.module';
 import { TaskCommentsModule } from './task-comments/task-comments.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { TaskReminderService } from './tasks/task-reminder.service';
 
 @Module({
   imports: [
@@ -29,8 +31,13 @@ import { TaskCommentsModule } from './task-comments/task-comments.module';
       }),
       inject: [ConfigService],
     }),
+    ScheduleModule.forRoot(),
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule {
+  constructor(private readonly taskReminderService: TaskReminderService) {
+    this.taskReminderService.sendTaskReminders();
+  }
+}

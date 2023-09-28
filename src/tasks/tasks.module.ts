@@ -9,6 +9,7 @@ import { Task, TaskSchema } from './schemas/task.schema';
 import { File, FileSchema } from './schemas/file.schema';
 import { User, UserSchema } from 'src/user/schemas/user.schema';
 import { TaskList, TaskListSchema } from './schemas/task-list.schema';
+import { TaskReminderService } from './task-reminder.service';
 
 @Module({
   imports: [
@@ -29,7 +30,7 @@ import { TaskList, TaskListSchema } from './schemas/task-list.schema';
     }),
   ],
   controllers: [TasksController],
-  providers: [TasksService],
-  exports: [TasksService],
+  providers: [TasksService, TaskReminderService],
+  exports: [TasksService, TaskReminderService],
 })
 export class TasksModule {}
