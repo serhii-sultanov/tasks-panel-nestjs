@@ -128,4 +128,33 @@ export class UserService {
       );
     }
   }
+
+  async getClients() {
+    try {
+      const clients = await this.userModel
+        .find()
+        .select('-password -role -businessName -invitation_accepted')
+        .populate({
+          path: 'taskLists',
+          model: 'TaskList',
+          select: '-user_id',
+          populate: {
+            path: 'task_list',
+            model: 'Task',
+            select: '-task_files -task_comments -status',
+          },
+        })
+        .exec();
+
+      if (!clients) {
+        throw new NotFoundException('Clients not found');
+      }
+
+      return clients;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        'An error occurred when getting the clients.',
+      );
+    }
+  }
 }

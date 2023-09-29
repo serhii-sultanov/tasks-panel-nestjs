@@ -10,6 +10,7 @@ import Mailgun from 'mailgun.js';
 import mongoose, { Model } from 'mongoose';
 import { Message } from 'src/types/type';
 import { User } from 'src/user/schemas/user.schema';
+import { changeStatusTemplate } from 'src/utils/html-templates/changeStatusTemplate';
 import { ChangeStatusDto } from './dto/change-status.dto';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { EditTaskDto } from './dto/edit-task.dto';
@@ -17,6 +18,7 @@ import { EditTaskListDto } from './dto/edit-taskList.dto';
 import { File } from './schemas/file.schema';
 import { TaskList } from './schemas/task-list.schema';
 import { Task } from './schemas/task.schema';
+import { createTaskTemplate } from 'src/utils/html-templates/createTaskTemplate';
 
 @Injectable()
 export class TasksService {
@@ -96,21 +98,20 @@ export class TasksService {
         );
 
         const messageData = {
-          from: 'Excited User <nextech.crew@gmail.com>',
-          to: ['marchuk1992@gmail.com'],
-          subject: `Added new task list - ${createTaskDto.task_list_name} with task ${createTaskDto.task_title}`,
-          template: 'test',
-          't:variables': JSON.stringify({
-            clientName: client.firstName ? client.firstName : client.email,
-            adminName: adminName ? adminName : 'Max',
-            taskListName: createTaskDto.task_list_name,
-          }),
+          from: 'Sender <nextech.crew@gmail.com>',
+          to: [client.email],
+          subject: 'New task added',
+          html: createTaskTemplate(
+            `${adminName ? adminName : 'Max Iv'} from TAX CO added new task:`,
+            client.firstName,
+            client.email,
+            createTaskDto.task_list_name,
+            createTaskDto.task_title,
+          ),
         };
 
         await this.client.messages.create(this.MAILGUN_DOMAIN, messageData);
-
         await transactionSession.commitTransaction();
-
         return { message: 'Task list and task has been succesfully created' };
       }
 
@@ -129,19 +130,18 @@ export class TasksService {
         );
 
         const messageData = {
-          from: 'Excited User <nextech.crew@gmail.com>',
-          to: ['marchuk1992@gmail.com'],
-          subject: `In the task (${isTask.task_title}) has been loaded new file(s)`,
-          template: 'test',
-          't:variables': JSON.stringify({
-            clientName: client.firstName ? client.firstName : client.email,
-            adminName: adminName ? adminName : 'Max',
-            taskListName: isTaskList.task_list_name,
-          }),
+          from: 'Sender <nextech.crew@gmail.com>',
+          to: [client.email],
+          subject: `In the task has been loaded new file(s),`,
+          html: createTaskTemplate(
+            `${adminName ? adminName : 'Max Iv'} from TAX CO updated task:`,
+            client.firstName,
+            client.email,
+            createTaskDto.task_list_name,
+            createTaskDto.task_title,
+          ),
         };
-
         await this.client.messages.create(this.MAILGUN_DOMAIN, messageData);
-
         await transactionSession.commitTransaction();
         return { message: 'Task Updated' };
       } else {
@@ -162,19 +162,18 @@ export class TasksService {
         );
 
         const messageData = {
-          from: 'Excited User <nextech.crew@gmail.com>',
-          to: ['marchuk1992@gmail.com'],
+          from: 'Sender <nextech.crew@gmail.com>',
+          to: [client.email],
           subject: 'New task added',
-          template: 'test',
-          't:variables': JSON.stringify({
-            clientName: client.firstName ? client.firstName : client.email,
-            adminName: adminName ? adminName : 'Max',
-            taskListName: isTaskList.task_list_name,
-          }),
+          html: createTaskTemplate(
+            `${adminName ? adminName : 'Max Iv'} from TAX CO added new task:`,
+            client.firstName,
+            client.email,
+            createTaskDto.task_list_name,
+            createTaskDto.task_title,
+          ),
         };
-
         await this.client.messages.create(this.MAILGUN_DOMAIN, messageData);
-
         await transactionSession.commitTransaction();
         return { message: 'Task created and added into Task List' };
       }
@@ -214,24 +213,35 @@ export class TasksService {
         throw new NotFoundException('Client for this task not found');
       }
 
+      const newComment = {
+        user_id: client.id,
+        comment: `${
+          adminName ? adminName : 'Max Iv'
+        } from TAX CO changed the task status: ${changeStatusDto.status}`,
+        isSystem: true,
+      };
+
       const task = await this.taskModel.findByIdAndUpdate(
         taskId,
         {
           $set: { status: changeStatusDto.status },
+          $push: { task_comments: newComment },
         },
         { new: true },
       );
 
       const messageData = {
-        from: 'Excited User <nextech.crew@gmail.com>',
-        to: ['marchuk1992@gmail.com'],
+        from: 'Sender <nextech.crew@gmail.com>',
+        to: [client.email],
         subject: `Task (${task.task_title}) change status`,
-        template: 'test2',
-        't:variables': JSON.stringify({
-          clientName: client.firstName ? client.firstName : client.email,
-          adminName: adminName ? adminName : 'Max',
-          status: changeStatusDto.status,
-        }),
+        html: changeStatusTemplate(
+          adminName,
+          client.firstName,
+          client.lastName,
+          client.email,
+          task.status,
+          task.task_title,
+        ),
       };
 
       await this.client.messages.create(this.MAILGUN_DOMAIN, messageData);

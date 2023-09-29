@@ -21,6 +21,7 @@ import { ChangeClientRoleDto } from './dto/change-client-role.dto';
 import { DeleteTaskDto } from './dto/delete-task.dto';
 import { DeleteTaskListDto } from './dto/delete-tasklist.dto';
 import { DeleteFileDto } from './dto/delete-file.dto';
+import { userAuthTemplate } from 'src/utils/html-templates/userAuthTemplate';
 
 @Injectable()
 export class AdminService {
@@ -61,18 +62,14 @@ export class AdminService {
       });
 
       const messageData = {
-        from: 'Excited User <nextech.crew@gmail.com>',
-        to: ['marchuk1992@gmail.com'],
+        from: 'Sender <nextech.crew@gmail.com>',
+        to: [registerUserDto.email],
         subject: `Your new account in TAX CO.`,
-        template: 'task-client-comment',
-        't:variables': JSON.stringify({
-          clientName: registerUserDto.email,
-          message: `${
-            adminName ? adminName : 'Max'
-          } TAX CO has registered you on the platform. Here are your login details: Login: ${
-            registerUserDto.email
-          }, Pass: ${registerUserDto.password}".`,
-        }),
+        html: userAuthTemplate(
+          registerUserDto.email,
+          registerUserDto.password,
+          adminName,
+        ),
       };
       await this.client.messages.create(this.MAILGUN_DOMAIN, messageData);
 

@@ -27,6 +27,7 @@ import {
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { Message } from 'src/types/type';
 import { User } from 'src/user/schemas/user.schema';
+import { UserService } from 'src/user/user.service';
 import { AdminService } from './admin.service';
 import { AdminRegisterUserDto } from './dto/admin-register-client.dto';
 import { ChangeClientRoleDto } from './dto/change-client-role.dto';
@@ -36,7 +37,10 @@ import { AdminAuthGuard } from './guards/admin-auth.guard';
 @UseGuards(JwtAuthGuard)
 @ApiTags('Admin Endpoints')
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(
+    private readonly adminService: AdminService,
+    private readonly userService: UserService,
+  ) {}
 
   @ApiOperation({ summary: 'Registration new client' })
   @ApiBearerAuth('Token')
@@ -58,6 +62,22 @@ export class AdminController {
       registerUserDto,
       req.user.firstName,
     );
+  }
+
+  @ApiOperation({ summary: 'Get all clients with tasklists and tasks' })
+  @ApiBearerAuth('Token')
+  @ApiOkResponse({
+    description: 'Clients have been successfully got',
+  })
+  @ApiNotFoundResponse({ description: 'Clients not found' })
+  @ApiUnauthorizedResponse({
+    description: 'User does not have Token. User Unauthorized.',
+  })
+  @ApiConflictResponse({ description: 'User does not have any rights.' })
+  @Get('clients')
+  @UseGuards(AdminAuthGuard)
+  getClients() {
+    return this.userService.getClients();
   }
 
   @ApiOperation({ summary: 'Get Paginated Clients' })

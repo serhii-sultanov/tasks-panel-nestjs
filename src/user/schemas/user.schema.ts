@@ -31,7 +31,7 @@ export class User extends BaseDocument {
   password: string;
 
   @ApiProperty()
-  @Prop({ default: 'user' })
+  @Prop({ default: 'client' })
   role: string;
 
   @Prop([{ type: mongoose.Schema.Types.ObjectId, ref: 'TaskList' }])

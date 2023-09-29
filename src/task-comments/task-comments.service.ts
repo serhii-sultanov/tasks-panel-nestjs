@@ -13,6 +13,8 @@ import { File } from 'src/tasks/schemas/file.schema';
 import { Task } from 'src/tasks/schemas/task.schema';
 import { Message } from 'src/types/type';
 import { User } from 'src/user/schemas/user.schema';
+import { adminCommentTemplate } from 'src/utils/html-templates/adminCommentTemplate';
+import { clientCommentTemplate } from 'src/utils/html-templates/clientCommentTemplate';
 import { EditCommentDto } from './dto/edit-task-comment.dto';
 import { LeaveCommentDto } from './dto/leave-comment.dto';
 
@@ -33,18 +35,21 @@ export class TaskCommentsService {
     key: this.MAILGUN_API_KEY,
   });
 
-  async getTaskComments(taskId: string) {
+  async getTask(taskId: string): Promise<Task> {
     try {
-      const taskComments = await this.taskModel.findById(taskId).populate({
-        path: 'task_comments',
-        options: { sort: { createdAt: 1 } },
-        populate: [
-          { path: 'user_id', select: '-password -taskLists' },
-          { path: 'files_id' },
-        ],
-      });
+      const task = await this.taskModel.findById(taskId).populate([
+        {
+          path: 'task_comments',
+          options: { sort: { createdAt: 1 } },
+          populate: [
+            { path: 'user_id', select: '-password -taskLists' },
+            { path: 'files_id' },
+          ],
+        },
+        { path: 'task_files', model: 'File' },
+      ]);
 
-      return taskComments.task_comments;
+      return task;
     } catch (err) {
       throw new InternalServerErrorException(
         'Error occured when getting task comments.',
@@ -58,7 +63,7 @@ export class TaskCommentsService {
     leaveCommentDto: LeaveCommentDto,
     files: Express.Multer.File[],
     adminName: string,
-  ) {
+  ): Promise<Message> {
     const transactionSession = await this.connection.startSession();
     try {
       transactionSession.startTransaction();
@@ -108,21 +113,19 @@ export class TaskCommentsService {
         );
 
         const messageData = {
-          from: 'Excited User <nextech.crew@gmail.com>',
-          to: ['marchuk1992@gmail.com'],
-          subject: `Admin left comment into your task ${task.task_title}`,
-          template: 'task-client-comment',
-          't:variables': JSON.stringify({
-            clientName: client.firstName ? client.firstName : client.email,
-            message: `${
-              adminName ? adminName : 'Max'
-            } from TAX CO left comment into your task - "${task.task_title}".`,
-          }),
+          from: 'Sender <nextech.crew@gmail.com>',
+          to: [client.email],
+          subject: `Admin left comment to task ${task.task_title}`,
+          html: adminCommentTemplate(
+            client.firstName,
+            client.email,
+            adminName,
+            task.task_title,
+          ),
         };
+
         await this.client.messages.create(this.MAILGUN_DOMAIN, messageData);
-
         await transactionSession.commitTransaction();
-
         return { message: 'Comment has been successfully sended.' };
       } else {
         await this.taskModel.findByIdAndUpdate(
@@ -135,22 +138,16 @@ export class TaskCommentsService {
         );
 
         const messageData = {
-          from: 'Excited User <nextech.crew@gmail.com>',
+          from: 'Sender <nextech.crew@gmail.com>',
           to: ['nextech.crew@gmail.com'],
           subject: `Client ${
             user.firstName ? user.firstName : user.email
-          } left comment`,
-          template: 'task-comment',
-          't:variables': JSON.stringify({
-            adminName: adminName ? adminName : 'Max',
-            message: `Client left comment into task - "${task.task_title}". Task status: Needs review.`,
-          }),
+          } left comment to task.`,
+          html: clientCommentTemplate(adminName, task.task_title),
         };
 
         await this.client.messages.create(this.MAILGUN_DOMAIN, messageData);
-
         await transactionSession.commitTransaction();
-
         return { message: 'Comment has been successfully sended.' };
       }
     } catch (err) {

@@ -14,6 +14,13 @@ import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
 import { AdminTasksController } from './admin.tasks.controller';
 import { AdminTaskCommentsController } from './admin.tasks-comment.controller';
+import { AdminTaskReminderController } from './admin.task-reminder.controller';
+import { AdminTaskReminderService } from './admin.task-reminder.service';
+import {
+  TaskReminder,
+  TaskReminderSchema,
+} from './schemas/task-reminder.schema';
+import { UserService } from 'src/user/user.service';
 
 @Module({
   imports: [
@@ -22,6 +29,7 @@ import { AdminTaskCommentsController } from './admin.tasks-comment.controller';
       { name: Task.name, schema: TaskSchema },
       { name: File.name, schema: FileSchema },
       { name: TaskList.name, schema: TaskListSchema },
+      { name: TaskReminder.name, schema: TaskReminderSchema },
     ]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -32,13 +40,20 @@ import { AdminTaskCommentsController } from './admin.tasks-comment.controller';
       inject: [ConfigService],
     }),
   ],
-  providers: [TasksService, AdminService, TaskCommentsService],
+  providers: [
+    TasksService,
+    AdminService,
+    TaskCommentsService,
+    AdminTaskReminderService,
+    UserService,
+  ],
   controllers: [
     TasksController,
     AdminTasksController,
     AdminController,
     TaskCommentsController,
     AdminTaskCommentsController,
+    AdminTaskReminderController,
   ],
   exports: [AdminService],
 })

@@ -26,6 +26,8 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { fileUploadInterceptor } from 'src/utils/fileUploadInterceptor';
 import { LeaveCommentDto } from './dto/leave-comment.dto';
 import { TaskCommentsService } from './task-comments.service';
+import { Task } from 'src/tasks/schemas/task.schema';
+import { Message } from 'src/types/type';
 
 @ApiTags('Work with Tasks Comments')
 @Controller('comment')
@@ -33,12 +35,12 @@ import { TaskCommentsService } from './task-comments.service';
 export class TaskCommentsController {
   constructor(private readonly taskCommentsService: TaskCommentsService) {}
 
-  @ApiOperation({ summary: 'Get task comments' })
+  @ApiOperation({ summary: 'Get task' })
   @ApiBearerAuth('Token')
   @ApiOkResponse({
-    description: 'Task comments has successfully got',
+    description: 'Task has successfully got',
   })
-  @ApiNotFoundResponse({ description: 'Comments not found' })
+  @ApiNotFoundResponse({ description: 'Task not found' })
   @ApiUnauthorizedResponse({
     description: 'User does not have Token. User Unauthorized.',
   })
@@ -47,8 +49,8 @@ export class TaskCommentsController {
   })
   @ApiConflictResponse({ description: 'User does not have any rights.' })
   @Get('task/:taskId')
-  getTaskComments(@Param('taskId') taskId: string) {
-    return this.taskCommentsService.getTaskComments(taskId);
+  getTask(@Param('taskId') taskId: string): Promise<Task> {
+    return this.taskCommentsService.getTask(taskId);
   }
 
   @ApiOperation({ summary: 'Leave comment' })
@@ -73,7 +75,7 @@ export class TaskCommentsController {
     @Body() leaveCommentDto: LeaveCommentDto,
     @UploadedFiles()
     files: Express.Multer.File[],
-  ) {
+  ): Promise<Message> {
     return this.taskCommentsService.leaveTaskComment(
       req.user.role,
       req.user.id,

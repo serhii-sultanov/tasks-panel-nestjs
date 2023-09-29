@@ -10,6 +10,10 @@ import { File, FileSchema } from './schemas/file.schema';
 import { User, UserSchema } from 'src/user/schemas/user.schema';
 import { TaskList, TaskListSchema } from './schemas/task-list.schema';
 import { TaskReminderService } from './task-reminder.service';
+import {
+  TaskReminder,
+  TaskReminderSchema,
+} from 'src/admin/schemas/task-reminder.schema';
 
 @Module({
   imports: [
@@ -19,6 +23,7 @@ import { TaskReminderService } from './task-reminder.service';
       { name: TaskList.name, schema: TaskListSchema },
       { name: Task.name, schema: TaskSchema },
       { name: File.name, schema: FileSchema },
+      { name: TaskReminder.name, schema: TaskReminderSchema },
     ]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
