@@ -143,7 +143,14 @@ export class TaskCommentsService {
           subject: `Client ${
             user.firstName ? user.firstName : user.email
           } left comment to task.`,
-          html: clientCommentTemplate(adminName, task.task_title),
+          html: clientCommentTemplate(
+            client.firstName,
+            client.lastName,
+            client.businessName,
+            client.email,
+            'Max Iv',
+            task.task_title,
+          ),
         };
 
         await this.client.messages.create(this.MAILGUN_DOMAIN, messageData);

@@ -1,6 +1,13 @@
-export function clientCommentTemplate(adminName: string, task_title: string) {
+export function clientCommentTemplate(
+  firstName: string,
+  lastName: string,
+  businessName: string,
+  email: string,
+  adminName: string,
+  task_title: string,
+) {
   const adminNameString = adminName ? adminName : 'Max Iv';
-
+  const fullName = firstName || lastName ? `${firstName} ${lastName}` : email;
   return `
       <div
         style="
@@ -31,7 +38,7 @@ export function clientCommentTemplate(adminName: string, task_title: string) {
         >
           <p style="margin-top: 0">Hello ${adminNameString},</p>
           <p style="margin-top: 0">
-            Client left comment to task - <span style="font-weight: bold">"${task_title}"</span>. Task status: <span style="margin: 0; color: #ff7300;">Needs review.</span>
+            ${fullName} - ${businessName} commented on <span style="font-weight: bold">"${task_title}"</span>. Task status: <span style="margin: 0; color: #ff7300;">Needs review.</span>
           </p>
           <a
             style="
