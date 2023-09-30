@@ -129,7 +129,7 @@ export class UserService {
     }
   }
 
-  async getClients() {
+  async getClients(): Promise<User[]> {
     try {
       const clients = await this.userModel
         .find()
@@ -151,6 +151,69 @@ export class UserService {
       }
 
       return clients;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        'An error occurred when getting the clients.',
+      );
+    }
+  }
+
+  async getClientsWithOpenTasks(page: number, pageSize: number) {
+    try {
+      const clients = await this.userModel
+        .find({
+          taskLists: { $ne: [] },
+        })
+        .select('-password -role -invitation_accepted')
+        .populate({
+          path: 'taskLists',
+          model: 'TaskList',
+          select: '-user_id',
+          match: {
+            task_list: { $ne: [] },
+          },
+          populate: {
+            path: 'task_list',
+            model: 'Task',
+            select: '-task_files -task_comments -task_description',
+            match: {
+              status: 'waiting for client',
+            },
+          },
+        })
+        .exec();
+
+      if (!clients) {
+        throw new NotFoundException('Clients not found');
+      }
+      const total = clients.length;
+      const skip = (page - 1) * pageSize;
+      const clientsPerPage = await this.userModel
+        .find({
+          taskLists: { $ne: [] },
+        })
+        .select('-password -role -invitation_accepted')
+        .skip(skip)
+        .limit(pageSize)
+        .populate({
+          path: 'taskLists',
+          model: 'TaskList',
+          select: '-user_id',
+          match: {
+            task_list: { $ne: [] },
+          },
+          populate: {
+            path: 'task_list',
+            model: 'Task',
+            select: '-task_files -task_comments -task_description',
+            match: {
+              status: 'waiting for client',
+            },
+          },
+        })
+        .exec();
+
+      return { totalClients: total, clientsPerPage };
     } catch (err) {
       throw new InternalServerErrorException(
         'An error occurred when getting the clients.',

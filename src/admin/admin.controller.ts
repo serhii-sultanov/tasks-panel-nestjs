@@ -76,8 +76,27 @@ export class AdminController {
   @ApiConflictResponse({ description: 'User does not have any rights.' })
   @Get('clients')
   @UseGuards(AdminAuthGuard)
-  getClients() {
+  getClients(): Promise<User[]> {
     return this.userService.getClients();
+  }
+
+  @ApiOperation({ summary: 'Get clients with Open Tasks' })
+  @ApiBearerAuth('Token')
+  @ApiOkResponse({
+    description: 'Clients have been successfully got',
+  })
+  @ApiNotFoundResponse({ description: 'Clients not found' })
+  @ApiUnauthorizedResponse({
+    description: 'User does not have Token. User Unauthorized.',
+  })
+  @ApiConflictResponse({ description: 'User does not have any rights.' })
+  @Get('opentasks/clients')
+  @UseGuards(AdminAuthGuard)
+  getClientsWithOpenTasks(
+    @Query('page') page: number = 1,
+    @Query('pageSize') pageSize: number = 10,
+  ) {
+    return this.userService.getClientsWithOpenTasks(page, pageSize);
   }
 
   @ApiOperation({ summary: 'Get Paginated Clients' })
