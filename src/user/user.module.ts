@@ -6,10 +6,14 @@ import { JwtStrategy } from 'src/auth/strategies/jwt.strategy';
 import { User, UserSchema } from './schemas/user.schema';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
+import { Activity, ActivitySchema } from 'src/admin/schemas/activity.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    MongooseModule.forFeature([
+      { name: User.name, schema: UserSchema },
+      { name: Activity.name, schema: ActivitySchema },
+    ]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({

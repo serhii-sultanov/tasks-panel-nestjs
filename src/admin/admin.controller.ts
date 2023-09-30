@@ -175,4 +175,23 @@ export class AdminController {
   ): Promise<Message> {
     return this.adminService.changeClientRole(clientId, changeClientRoleDto);
   }
+
+  @ApiOperation({ summary: 'Get paginated activity' })
+  @ApiBearerAuth('Token')
+  @ApiOkResponse({
+    description: 'Paginated activity have been successfully got',
+  })
+  @ApiNotFoundResponse({ description: 'Activity not found' })
+  @ApiUnauthorizedResponse({
+    description: 'User does not have Token. User Unauthorized.',
+  })
+  @ApiConflictResponse({ description: 'User does not have any rights.' })
+  @Get('activity')
+  @UseGuards(AdminAuthGuard)
+  getClientActivity(
+    @Query('page') page: number = 1,
+    @Query('pageSize') pageSize: number = 10,
+  ) {
+    return this.userService.getClientActivity(page, pageSize);
+  }
 }

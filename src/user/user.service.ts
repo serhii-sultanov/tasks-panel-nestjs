@@ -14,11 +14,14 @@ import { Token } from 'src/types/type';
 import { User } from './schemas/user.schema';
 import { UpdateClientDataDto } from './dto/update-client.dto';
 import { ChangeUserPasswordDto } from './dto/change-client-password.dto';
+import { Activity } from 'src/admin/schemas/activity.schema';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
+    @InjectModel(Activity.name) private activityModel: Model<Activity>,
+
     private readonly jwtService: JwtService,
   ) {}
 
@@ -217,6 +220,33 @@ export class UserService {
     } catch (err) {
       throw new InternalServerErrorException(
         'An error occurred when getting the clients.',
+      );
+    }
+  }
+
+  async getClientActivity(page: number, pageSize: number) {
+    try {
+      const activityTotal = await this.activityModel.find();
+      if (!activityTotal) {
+        throw new NotFoundException('Activity not found');
+      }
+      const total = activityTotal.length;
+      const skip = (page - 1) * pageSize;
+      const activity = await this.activityModel
+        .find()
+        .select('-taskList_id')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(pageSize)
+        .populate('user_id')
+        .populate('task_id')
+        .populate('activity_files')
+        .exec();
+
+      return { totalActivity: total, activityPerPage: activity };
+    } catch (err) {
+      throw new InternalServerErrorException(
+        'An error occurred when getting the clients activity.',
       );
     }
   }
