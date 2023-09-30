@@ -11,15 +11,14 @@ import {
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
-  ApiBody,
   ApiCreatedResponse,
   ApiInternalServerErrorResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Token } from 'src/types/type';
-import { User } from 'src/user/schemas/user.schema';
 import { UserService } from 'src/user/user.service';
 import { AuthService } from './auth.service';
 import { LoginUserDto } from './dto/login-user.dto';
@@ -27,6 +26,7 @@ import { RegisterUserDto } from './dto/register-user.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 
+@ApiTags('User Authorization')
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -35,10 +35,8 @@ export class AuthController {
   ) {}
 
   @ApiOperation({ summary: 'Registration' })
-  @ApiBody({ type: RegisterUserDto, description: 'User signup Credentials' })
   @ApiCreatedResponse({
     description: 'User has been successfully created.',
-    type: Token,
   })
   @ApiBadRequestResponse({ description: 'This email is already existed!' })
   @ApiInternalServerErrorResponse({
@@ -46,12 +44,11 @@ export class AuthController {
   })
   @Post('registration')
   @UsePipes(new ValidationPipe())
-  create(@Body() registerUserDto: RegisterUserDto): Promise<Token> {
+  registration(@Body() registerUserDto: RegisterUserDto): Promise<Token> {
     return this.userService.registration(registerUserDto);
   }
 
   @ApiOperation({ summary: 'User Login' })
-  @ApiBody({ type: LoginUserDto })
   @ApiUnauthorizedResponse({ description: 'Incorrect Email or Password.' })
   @Post('login')
   @UseGuards(LocalAuthGuard)
@@ -66,7 +63,6 @@ export class AuthController {
   @ApiBearerAuth('Token')
   @ApiOkResponse({
     description: 'Profile has been successfully got.',
-    type: User,
   })
   @ApiUnauthorizedResponse({
     description: 'Need User Token for Getting User Profile',
