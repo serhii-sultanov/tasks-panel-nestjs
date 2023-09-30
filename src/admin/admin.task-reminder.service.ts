@@ -4,7 +4,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { SchedulerRegistry } from '@nestjs/schedule';
 import { Model } from 'mongoose';
+import { TaskReminderService } from 'src/tasks/task-reminder.service';
 import { Message } from 'src/types/type';
 import { UpdateTaskReminderDto } from './dto/update-task-reminder.dto';
 import { TaskReminder } from './schemas/task-reminder.schema';
@@ -14,6 +16,8 @@ export class AdminTaskReminderService {
   constructor(
     @InjectModel(TaskReminder.name)
     private taskReminderModel: Model<TaskReminder>,
+    private schedulerRegistry: SchedulerRegistry,
+    private taskReminderService: TaskReminderService,
   ) {}
 
   async updateTaskReminder(
@@ -26,11 +30,17 @@ export class AdminTaskReminderService {
             $set: { dayBetween: updateTaskReminderDto.dayBetween },
           })
           .exec();
+        this.schedulerRegistry.deleteCronJob('remind');
+        await this.taskReminderService.sendTaskReminders();
+
         return { message: 'Task reminder has been successfully updated.' };
       } else {
         await this.taskReminderModel.create({
           dayBetween: updateTaskReminderDto.dayBetween,
         });
+
+        this.schedulerRegistry.deleteCronJob('remind');
+        await this.taskReminderService.sendTaskReminders();
         return { message: 'Task reminder has been successfully created.' };
       }
     } catch (err) {

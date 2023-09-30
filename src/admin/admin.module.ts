@@ -21,6 +21,7 @@ import {
   TaskReminderSchema,
 } from './schemas/task-reminder.schema';
 import { UserService } from 'src/user/user.service';
+import { TaskReminderService } from 'src/tasks/task-reminder.service';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { UserService } from 'src/user/user.service';
     AdminService,
     TaskCommentsService,
     AdminTaskReminderService,
+    TaskReminderService,
     UserService,
   ],
   controllers: [
