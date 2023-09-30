@@ -30,6 +30,7 @@ export class Task extends BaseDocument {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
       },
+      activity_id: { type: mongoose.Schema.Types.ObjectId },
       comment: String,
       isSystem: { type: Boolean, default: false },
       createdAt: { type: Date, default: Date.now },
@@ -40,6 +41,7 @@ export class Task extends BaseDocument {
   task_comments: {
     id: mongoose.Schema.Types.ObjectId;
     user_id: User;
+    activity_id: mongoose.Schema.Types.ObjectId;
     comment: string;
     isSystem: boolean;
     createdAt: Date;

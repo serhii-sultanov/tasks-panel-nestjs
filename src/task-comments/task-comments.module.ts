@@ -7,6 +7,8 @@ import { Task, TaskSchema } from 'src/tasks/schemas/task.schema';
 import { User, UserSchema } from 'src/user/schemas/user.schema';
 import { TaskCommentsController } from './task-comments.controller';
 import { TaskCommentsService } from './task-comments.service';
+import { Activity, ActivitySchema } from 'src/admin/schemas/activity.schema';
+import { TaskList, TaskListSchema } from 'src/tasks/schemas/task-list.schema';
 
 @Module({
   imports: [
@@ -14,6 +16,8 @@ import { TaskCommentsService } from './task-comments.service';
       { name: User.name, schema: UserSchema },
       { name: Task.name, schema: TaskSchema },
       { name: File.name, schema: FileSchema },
+      { name: TaskList.name, schema: TaskListSchema },
+      { name: Activity.name, schema: ActivitySchema },
     ]),
     JwtModule.registerAsync({
       imports: [ConfigModule],

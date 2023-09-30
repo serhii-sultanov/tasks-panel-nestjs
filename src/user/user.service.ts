@@ -132,8 +132,8 @@ export class UserService {
   async getClients(): Promise<User[]> {
     try {
       const clients = await this.userModel
-        .find()
-        .select('-password -role -businessName -invitation_accepted')
+        .find({ role: { $ne: 'admin' } })
+        .select('-password -businessName -invitation_accepted')
         .populate({
           path: 'taskLists',
           model: 'TaskList',

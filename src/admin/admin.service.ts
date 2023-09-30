@@ -16,12 +16,13 @@ import { TaskList } from 'src/tasks/schemas/task-list.schema';
 import { Task } from 'src/tasks/schemas/task.schema';
 import { Message } from 'src/types/type';
 import { User } from 'src/user/schemas/user.schema';
+import { userAuthTemplate } from 'src/utils/html-templates/userAuthTemplate';
 import { AdminRegisterUserDto } from './dto/admin-register-client.dto';
 import { ChangeClientRoleDto } from './dto/change-client-role.dto';
+import { DeleteFileDto } from './dto/delete-file.dto';
 import { DeleteTaskDto } from './dto/delete-task.dto';
 import { DeleteTaskListDto } from './dto/delete-tasklist.dto';
-import { DeleteFileDto } from './dto/delete-file.dto';
-import { userAuthTemplate } from 'src/utils/html-templates/userAuthTemplate';
+import { Activity } from './schemas/activity.schema';
 
 @Injectable()
 export class AdminService {
@@ -30,6 +31,7 @@ export class AdminService {
     @InjectModel(TaskList.name) private taskListModel: Model<TaskList>,
     @InjectModel(Task.name) private taskModel: Model<Task>,
     @InjectModel(File.name) private fileModel: Model<File>,
+    @InjectModel(Activity.name) private activityModel: Model<Activity>,
     @InjectConnection() private readonly connection: mongoose.Connection,
     private readonly config: ConfigService,
   ) {}
@@ -200,6 +202,10 @@ export class AdminService {
           .session(transactionSession);
       }
 
+      await this.activityModel
+        .deleteMany({ user_id: clientId })
+        .session(transactionSession);
+
       await this.userModel
         .findByIdAndDelete(clientId)
         .session(transactionSession);
@@ -297,6 +303,10 @@ export class AdminService {
         })
         .session(transactionSession);
 
+      await this.activityModel
+        .deleteMany({ taskList_id: taskListId })
+        .session(transactionSession);
+
       await this.taskListModel
         .findByIdAndDelete(taskListId)
         .session(transactionSession);
@@ -370,6 +380,10 @@ export class AdminService {
         .findByIdAndUpdate(deleteTaskDto.taskListId, {
           $pull: { task_list: task.id },
         })
+        .session(transactionSession);
+
+      await this.activityModel
+        .deleteMany({ task_id: taskId })
         .session(transactionSession);
 
       await this.taskModel

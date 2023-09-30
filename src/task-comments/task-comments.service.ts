@@ -9,7 +9,9 @@ import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import * as fs from 'fs';
 import Mailgun from 'mailgun.js';
 import mongoose, { Model } from 'mongoose';
+import { Activity } from 'src/admin/schemas/activity.schema';
 import { File } from 'src/tasks/schemas/file.schema';
+import { TaskList } from 'src/tasks/schemas/task-list.schema';
 import { Task } from 'src/tasks/schemas/task.schema';
 import { Message } from 'src/types/type';
 import { User } from 'src/user/schemas/user.schema';
@@ -24,6 +26,8 @@ export class TaskCommentsService {
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(Task.name) private taskModel: Model<Task>,
     @InjectModel(File.name) private fileModel: Model<File>,
+    @InjectModel(TaskList.name) private taskListModel: Model<TaskList>,
+    @InjectModel(Activity.name) private activityModel: Model<Activity>,
     @InjectConnection() private readonly connection: mongoose.Connection,
     private readonly config: ConfigService,
   ) {}
@@ -97,7 +101,14 @@ export class TaskCommentsService {
         session: transactionSession,
       });
 
-      const newComment = {
+      const newClientComment = {
+        user_id: user,
+        comment: leaveCommentDto.comment,
+        files_id: newFiles,
+        activity_id: new mongoose.Types.ObjectId(),
+      };
+
+      const newAdminComment = {
         user_id: user,
         comment: leaveCommentDto.comment,
         files_id: newFiles,
@@ -107,7 +118,7 @@ export class TaskCommentsService {
         await this.taskModel.findByIdAndUpdate(
           leaveCommentDto.task_id,
           {
-            $push: { task_comments: newComment },
+            $push: { task_comments: newAdminComment },
           },
           { new: true, session: transactionSession },
         );
@@ -131,11 +142,25 @@ export class TaskCommentsService {
         await this.taskModel.findByIdAndUpdate(
           leaveCommentDto.task_id,
           {
-            $push: { task_comments: newComment },
+            $push: { task_comments: newClientComment },
             $set: { status: 'needs review' },
           },
           { new: true, session: transactionSession },
         );
+
+        const taskList = await this.taskListModel
+          .findOne({ task_list: { $in: [task.id] } })
+          .session(transactionSession);
+
+        const newActivity = new this.activityModel({
+          user_id: client.id,
+          taskList_id: taskList.id,
+          task_id: task.id,
+          activity_files: newFiles,
+          activity_comment: newClientComment.activity_id,
+        });
+
+        await newActivity.save({ session: transactionSession });
 
         const messageData = {
           from: 'Sender <nextech.crew@gmail.com>',
@@ -175,6 +200,10 @@ export class TaskCommentsService {
       transactionSession.startTransaction();
       const task = await this.taskModel
         .findById(taskId)
+        .populate({
+          path: 'task_comments',
+          model: 'User',
+        })
         .session(transactionSession);
       if (!task) {
         throw new NotFoundException('Task not found');
@@ -189,11 +218,18 @@ export class TaskCommentsService {
       const files = await this.fileModel.find({
         _id: { $in: comment.files_id },
       });
+
       if (files?.length) {
         await this.fileModel.deleteMany(
           { _id: { $in: comment.files_id } },
           { session: transactionSession },
         );
+
+        if (comment.user_id.role !== 'admin') {
+          await this.activityModel.deleteOne({
+            activity_comment: comment.activity_id,
+          });
+        }
 
         await this.taskModel.findByIdAndUpdate(
           taskId,
@@ -208,6 +244,12 @@ export class TaskCommentsService {
         return { message: 'Task comment has been successfully deleted' };
       }
 
+      if (comment.user_id.role !== 'admin') {
+        await this.activityModel.deleteOne({
+          activity_comment: comment.activity_id,
+        });
+      }
+
       await this.taskModel.findByIdAndUpdate(
         taskId,
         { $pull: { task_comments: { id: commentId } } },
@@ -217,6 +259,7 @@ export class TaskCommentsService {
       await transactionSession.commitTransaction();
       return { message: 'Task comment has been successfully deleted' };
     } catch (err) {
+      console.log(err);
       await transactionSession.abortTransaction();
       throw new ConflictException('Error when deleting task comment');
     } finally {
