@@ -13,6 +13,7 @@ import {
   ApiBearerAuth,
   ApiCreatedResponse,
   ApiInternalServerErrorResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
@@ -50,6 +51,7 @@ export class AuthController {
 
   @ApiOperation({ summary: 'User Login' })
   @ApiUnauthorizedResponse({ description: 'Incorrect Email or Password.' })
+  @ApiNotFoundResponse({ description: 'User not found' })
   @Post('login')
   @UseGuards(LocalAuthGuard)
   async login(
