@@ -230,6 +230,7 @@ export class UserService {
       if (!activityTotal) {
         throw new NotFoundException('Activity not found');
       }
+
       const total = activityTotal.length;
       const skip = (page - 1) * pageSize;
       const activity = await this.activityModel
@@ -238,7 +239,7 @@ export class UserService {
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(pageSize)
-        .populate('user_id')
+        .populate('user_id', '-password')
         .populate('task_id')
         .populate('activity_files')
         .exec();
