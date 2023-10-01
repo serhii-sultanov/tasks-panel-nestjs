@@ -1,9 +1,15 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
+import { IsEnum } from 'class-validator';
 import * as mongoose from 'mongoose';
 import { TaskList } from 'src/tasks/schemas/task-list.schema';
 import { BaseDocument } from 'src/utils/BaseDocument';
+
+export enum Role {
+  admin = 'admin',
+  client = 'client',
+}
 
 @Schema({
   timestamps: true,
@@ -31,8 +37,9 @@ export class User extends BaseDocument {
   password: string;
 
   @ApiProperty()
-  @Prop({ default: 'client' })
-  role: string;
+  @IsEnum(Role)
+  @Prop({ default: Role.client })
+  role: Role;
 
   @Prop([{ type: mongoose.Schema.Types.ObjectId, ref: 'TaskList' }])
   taskLists: TaskList[];

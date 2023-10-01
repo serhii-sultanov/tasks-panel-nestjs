@@ -60,7 +60,7 @@ export class AdminService {
       await this.userModel.create({
         email: registerUserDto.email,
         password: hashedPassword,
-        role: registerUserDto.role ? registerUserDto.role : 'user',
+        role: registerUserDto.role ? registerUserDto.role : 'client',
       });
 
       const messageData = {
