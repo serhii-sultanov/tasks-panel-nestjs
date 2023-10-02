@@ -48,14 +48,10 @@ export class AdminTaskReminderService {
     }
   }
 
-  async getTaskReminder(): Promise<TaskReminder> {
+  async getTaskReminder(): Promise<TaskReminder[]> {
     try {
       const reminder = await this.taskReminderModel.find();
-      if (!reminder.length) {
-        throw new NotFoundException('Reminder not found');
-      }
-
-      return reminder[0];
+      return reminder;
     } catch (err) {
       throw new ConflictException('Error occured when getting task reminder');
     }

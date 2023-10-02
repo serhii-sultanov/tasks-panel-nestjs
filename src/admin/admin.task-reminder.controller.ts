@@ -56,7 +56,7 @@ export class AdminTaskReminderController {
   })
   @Get('/taskReminder')
   @UseGuards(AdminAuthGuard)
-  getTaskReminder(): Promise<TaskReminder> {
+  getTaskReminder(): Promise<TaskReminder[]> {
     return this.adminTaskReminderService.getTaskReminder();
   }
 }
