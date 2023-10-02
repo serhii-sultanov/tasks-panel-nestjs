@@ -99,7 +99,7 @@ export class AdminController {
     return this.userService.getClientsWithOpenTasks(page, pageSize);
   }
 
-  @ApiOperation({ summary: 'Get Paginated Clients' })
+  @ApiOperation({ summary: 'Get Paginated Users' })
   @ApiBearerAuth('Token')
   @ApiOkResponse({
     description: 'Paginated clients have been successfully got',
