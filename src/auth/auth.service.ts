@@ -36,17 +36,21 @@ export class AuthService {
   }
 
   async login(user: User): Promise<any> {
-    const { id, email, firstName, role } = user;
+    const { id, email, firstName, role, lastName, businessName } = user;
     return {
       id,
       email,
       role,
       firstName,
+      lastName,
+      businessName,
       token: this.jwtService.sign({
         id: id,
         email: email,
         role: role,
         firstName: firstName,
+        lastName,
+        businessName,
       }),
     };
   }
