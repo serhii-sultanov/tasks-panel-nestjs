@@ -86,12 +86,12 @@ export class AdminService {
   async getPaginatedClients(page: number, pageSize: number) {
     try {
       const totalClients = await this.userModel.find();
-      if (!totalClients.length) {
+      if (!totalClients) {
         throw new NotFoundException('Clients not found');
       }
 
       const skip = (page - 1) * pageSize;
-      const clientsPerPage = await this.userModel
+      const clients = await this.userModel
         .find()
         .select('-password')
         .skip(skip)
@@ -106,12 +106,8 @@ export class AdminService {
         })
         .exec();
 
-      if (!clientsPerPage.length) {
-        throw new NotFoundException('Clients not found');
-      }
-
       return {
-        clientsPerPage,
+        clientsPerPage: clients,
         totalClients: totalClients.length,
       };
     } catch (err) {

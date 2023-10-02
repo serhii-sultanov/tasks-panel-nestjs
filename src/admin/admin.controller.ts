@@ -111,10 +111,7 @@ export class AdminController {
   @ApiConflictResponse({ description: 'User does not have any rights.' })
   @Get('users')
   @UseGuards(AdminAuthGuard)
-  getPaginatedClients(
-    @Query('page') page: number = 1,
-    @Query('pageSize') pageSize: number = 10,
-  ) {
+  getPaginatedClients(@Query('page') page, @Query('pageSize') pageSize) {
     return this.adminService.getPaginatedClients(page, pageSize);
   }
 
