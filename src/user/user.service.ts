@@ -70,6 +70,7 @@ export class UserService {
           populate: {
             path: 'task_list',
             model: 'Task',
+            options: { sort: { createdAt: -1 } },
             populate: {
               path: 'task_files',
               model: 'File',
