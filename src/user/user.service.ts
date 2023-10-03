@@ -15,6 +15,7 @@ import { User } from './schemas/user.schema';
 import { UpdateClientDataDto } from './dto/update-client.dto';
 import { ChangeUserPasswordDto } from './dto/change-client-password.dto';
 import { Activity } from 'src/admin/schemas/activity.schema';
+import { randomColorPick } from 'src/utils/randomColorPick';
 
 @Injectable()
 export class UserService {
@@ -33,12 +34,14 @@ export class UserService {
       throw new BadRequestException('This email is already existed!');
     }
 
+    const clientBackground = randomColorPick();
     try {
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(registerUserDto.password, salt);
       await this.userModel.create({
         email: registerUserDto.email,
         password: hashedPassword,
+        clientBackground,
       });
 
       const token = this.jwtService.sign({ email: registerUserDto.email });

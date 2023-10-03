@@ -23,6 +23,7 @@ import { DeleteFileDto } from './dto/delete-file.dto';
 import { DeleteTaskDto } from './dto/delete-task.dto';
 import { DeleteTaskListDto } from './dto/delete-tasklist.dto';
 import { Activity } from './schemas/activity.schema';
+import { randomColorPick } from 'src/utils/randomColorPick';
 
 @Injectable()
 export class AdminService {
@@ -54,6 +55,7 @@ export class AdminService {
       throw new BadRequestException('This email is already existed!');
     }
 
+    const clientBackground = randomColorPick();
     try {
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(registerUserDto.password, salt);
@@ -61,6 +63,7 @@ export class AdminService {
         email: registerUserDto.email,
         password: hashedPassword,
         role: registerUserDto.role ? registerUserDto.role : 'client',
+        clientBackground,
       });
 
       const messageData = {

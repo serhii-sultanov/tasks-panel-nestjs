@@ -47,6 +47,10 @@ export class User extends BaseDocument {
   @ApiProperty()
   @Prop({ default: false })
   invitation_accepted: boolean;
+
+  @ApiProperty()
+  @Prop({ default: '' })
+  clientBackground: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
