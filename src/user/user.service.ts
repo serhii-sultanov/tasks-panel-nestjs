@@ -67,6 +67,7 @@ export class UserService {
         .populate({
           path: 'taskLists',
           model: 'TaskList',
+          options: { sort: { createdAt: -1 } },
           populate: {
             path: 'task_list',
             model: 'Task',
