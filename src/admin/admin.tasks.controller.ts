@@ -157,7 +157,7 @@ export class AdminTasksController {
   @ApiNotFoundResponse({
     description: 'Client or task list not found.',
   })
-  @Delete('/taskList/:taskListId')
+  @Delete('/taskList/:userId/:taskListId')
   @UseGuards(AdminAuthGuard)
   deleteTaskList(
     @Param('userId') userId: string,
@@ -178,7 +178,7 @@ export class AdminTasksController {
   @ApiNotFoundResponse({
     description: 'Task not found.',
   })
-  @Delete('/task/:taskId')
+  @Delete('/task/:taskListId/:taskId')
   @UseGuards(AdminAuthGuard)
   deleteTask(
     @Param('taskListId') taskListId: string,
@@ -199,7 +199,7 @@ export class AdminTasksController {
   @ApiNotFoundResponse({
     description: 'File not found.',
   })
-  @Delete('/file/:fileId')
+  @Delete('/file/:taskId/:fileId')
   @UseGuards(AdminAuthGuard)
   deleteFile(
     @Param('taskId') taskId: string,
