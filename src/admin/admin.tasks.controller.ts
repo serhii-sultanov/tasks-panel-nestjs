@@ -1,16 +1,16 @@
 import {
   Body,
   Controller,
+  Delete,
   Param,
   Post,
   Put,
+  Request,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
-  Request,
   UsePipes,
   ValidationPipe,
-  Delete,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -32,11 +32,8 @@ import { EditTaskListDto } from 'src/tasks/dto/edit-taskList.dto';
 import { TasksService } from 'src/tasks/tasks.service';
 import { Message } from 'src/types/type';
 import { fileUploadInterceptor } from 'src/utils/fileUploadInterceptor';
-import { AdminAuthGuard } from './guards/admin-auth.guard';
-import { DeleteTaskListDto } from './dto/delete-tasklist.dto';
 import { AdminService } from './admin.service';
-import { DeleteTaskDto } from './dto/delete-task.dto';
-import { DeleteFileDto } from './dto/delete-file.dto';
+import { AdminAuthGuard } from './guards/admin-auth.guard';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard)
@@ -163,10 +160,10 @@ export class AdminTasksController {
   @Delete('/taskList/:taskListId')
   @UseGuards(AdminAuthGuard)
   deleteTaskList(
-    @Body() deleteTaskListDto: DeleteTaskListDto,
+    @Param('userId') userId: string,
     @Param('taskListId') taskListId: string,
   ): Promise<Message> {
-    return this.adminService.deleteTaskList(taskListId, deleteTaskListDto);
+    return this.adminService.deleteTaskList(taskListId, userId);
   }
 
   @ApiOperation({ summary: 'Delete task' })
@@ -184,10 +181,10 @@ export class AdminTasksController {
   @Delete('/task/:taskId')
   @UseGuards(AdminAuthGuard)
   deleteTask(
-    @Body() deleteTaskDto: DeleteTaskDto,
+    @Param('taskListId') taskListId: string,
     @Param('taskId') taskId: string,
   ): Promise<Message> {
-    return this.adminService.deleteTask(taskId, deleteTaskDto);
+    return this.adminService.deleteTask(taskId, taskListId);
   }
 
   @ApiOperation({ summary: 'Delete File from Task' })
@@ -205,9 +202,9 @@ export class AdminTasksController {
   @Delete('/file/:fileId')
   @UseGuards(AdminAuthGuard)
   deleteFile(
-    @Body() deleteFileDto: DeleteFileDto,
+    @Param('taskId') taskId: string,
     @Param('fileId') fileId: string,
   ): Promise<Message> {
-    return this.adminService.deleteFile(fileId, deleteFileDto);
+    return this.adminService.deleteFile(fileId, taskId);
   }
 }

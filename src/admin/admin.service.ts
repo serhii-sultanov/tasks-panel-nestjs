@@ -17,13 +17,10 @@ import { Task } from 'src/tasks/schemas/task.schema';
 import { Message } from 'src/types/type';
 import { User } from 'src/user/schemas/user.schema';
 import { userAuthTemplate } from 'src/utils/html-templates/userAuthTemplate';
+import { randomColorPick } from 'src/utils/randomColorPick';
 import { AdminRegisterUserDto } from './dto/admin-register-client.dto';
 import { ChangeClientRoleDto } from './dto/change-client-role.dto';
-import { DeleteFileDto } from './dto/delete-file.dto';
-import { DeleteTaskDto } from './dto/delete-task.dto';
-import { DeleteTaskListDto } from './dto/delete-tasklist.dto';
 import { Activity } from './schemas/activity.schema';
-import { randomColorPick } from 'src/utils/randomColorPick';
 
 @Injectable()
 export class AdminService {
@@ -236,10 +233,7 @@ export class AdminService {
     }
   }
 
-  async deleteTaskList(
-    taskListId: string,
-    deleteTaskListDto: DeleteTaskListDto,
-  ): Promise<Message> {
+  async deleteTaskList(taskListId: string, userId: string): Promise<Message> {
     const transactionSession = await this.connection.startSession();
 
     try {
@@ -297,7 +291,7 @@ export class AdminService {
       }
 
       await this.userModel
-        .findByIdAndUpdate(deleteTaskListDto.userId, {
+        .findByIdAndUpdate(userId, {
           $pull: { taskLists: taskList.id },
         })
         .session(transactionSession);
@@ -324,10 +318,7 @@ export class AdminService {
     }
   }
 
-  async deleteTask(
-    taskId: string,
-    deleteTaskDto: DeleteTaskDto,
-  ): Promise<Message> {
+  async deleteTask(taskId: string, taskListId: string): Promise<Message> {
     const transactionSession = await this.connection.startSession();
 
     try {
@@ -376,7 +367,7 @@ export class AdminService {
       }
 
       await this.taskListModel
-        .findByIdAndUpdate(deleteTaskDto.taskListId, {
+        .findByIdAndUpdate(taskListId, {
           $pull: { task_list: task.id },
         })
         .session(transactionSession);
@@ -402,10 +393,7 @@ export class AdminService {
     }
   }
 
-  async deleteFile(
-    fileId: string,
-    deleteFileDto: DeleteFileDto,
-  ): Promise<Message> {
+  async deleteFile(fileId: string, taskId: string): Promise<Message> {
     const transactionSession = await this.connection.startSession();
     try {
       transactionSession.startTransaction();
@@ -417,7 +405,7 @@ export class AdminService {
       }
 
       await this.taskModel
-        .findByIdAndUpdate(deleteFileDto.taskId, {
+        .findByIdAndUpdate(taskId, {
           $pull: { task_files: file.id },
         })
         .session(transactionSession);
