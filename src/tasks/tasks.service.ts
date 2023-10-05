@@ -76,6 +76,7 @@ export class TasksService {
 
       if (!isTaskList) {
         const createTask = new this.taskModel({
+          user_id: createTaskDto.user_id,
           task_title: createTaskDto.task_title,
           task_description: createTaskDto.task_description,
           task_files: newFiles,
@@ -146,6 +147,7 @@ export class TasksService {
         return { message: 'Task Updated' };
       } else {
         const createTask = new this.taskModel({
+          user_id: createTaskDto.user_id,
           task_title: createTaskDto.task_title,
           task_description: createTaskDto.task_description,
           task_files: newFiles,

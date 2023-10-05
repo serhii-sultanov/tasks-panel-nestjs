@@ -36,7 +36,15 @@ export class AuthService {
   }
 
   async login(user: User): Promise<any> {
-    const { id, email, firstName, role, lastName, businessName } = user;
+    const {
+      id,
+      email,
+      firstName,
+      role,
+      lastName,
+      businessName,
+      clientBackground,
+    } = user;
     return {
       id,
       email,
@@ -44,6 +52,7 @@ export class AuthService {
       firstName,
       lastName,
       businessName,
+      clientBackground,
       token: this.jwtService.sign({
         id: id,
         email: email,
@@ -51,6 +60,7 @@ export class AuthService {
         firstName: firstName,
         lastName,
         businessName,
+        clientBackground,
       }),
     };
   }

@@ -1,4 +1,11 @@
-import { Controller, Get, Param, Res, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  NotFoundException,
+  Param,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiConflictResponse,
   ApiNotFoundResponse,
@@ -34,6 +41,9 @@ export class TasksController {
     @Res() res: Response,
   ): Promise<void> {
     const file = await this.tasksService.downloadFile(fileId);
+    if (!fs.existsSync(file.file_path)) {
+      throw new NotFoundException('File not found');
+    }
     res.setHeader(
       'Content-Disposition',
       `attachment; filename=${file.file_originalName}`,

@@ -8,6 +8,10 @@ import { BaseDocument } from 'src/utils/BaseDocument';
   timestamps: true,
 })
 export class Task extends BaseDocument {
+  @ApiProperty()
+  @Prop({ required: true, type: mongoose.Schema.Types.ObjectId, ref: 'User' })
+  user_id: User;
+
   @ApiProperty({ example: 'Some task title', description: 'Task title' })
   @Prop({ required: true })
   task_title: string;

@@ -71,24 +71,22 @@ export class TaskCommentsService {
     const transactionSession = await this.connection.startSession();
     try {
       transactionSession.startTransaction();
-      const client = await this.userModel
-        .findById(leaveCommentDto.clientId)
-        .session(transactionSession);
-      if (!client) {
-        throw new NotFoundException('Client Not Found');
-      }
-      const user = await this.userModel
-        .findById(userId)
-        .session(transactionSession);
-      if (!user) {
-        throw new NotFoundException('User Not Found');
-      }
+
       const task = await this.taskModel
         .findById(leaveCommentDto.task_id)
         .session(transactionSession);
+
       if (!task) {
         throw new NotFoundException('Task Not Found');
       }
+      const client = await this.userModel
+        .findById(task.user_id)
+        .session(transactionSession);
+
+      if (!client) {
+        throw new NotFoundException('Client Not Found');
+      }
+
       const newFilesData = files.map((file) => {
         return {
           file_originalName: file.originalname,
@@ -102,19 +100,25 @@ export class TaskCommentsService {
       });
 
       const newClientComment = {
-        user_id: user,
+        user_id: client,
         comment: leaveCommentDto.comment,
         files_id: newFiles,
         activity_id: new mongoose.Types.ObjectId(),
       };
 
-      const newAdminComment = {
-        user_id: user,
-        comment: leaveCommentDto.comment,
-        files_id: newFiles,
-      };
-
       if (role === 'admin') {
+        const user = await this.userModel
+          .findById(userId)
+          .session(transactionSession);
+        if (!user) {
+          throw new NotFoundException('User Not Found');
+        }
+        const newAdminComment = {
+          user_id: user,
+          comment: leaveCommentDto.comment,
+          files_id: newFiles,
+        };
+
         await this.taskModel.findByIdAndUpdate(
           leaveCommentDto.task_id,
           {
@@ -166,7 +170,7 @@ export class TaskCommentsService {
           from: 'Sender <nextech.crew@gmail.com>',
           to: ['nextech.crew@gmail.com'],
           subject: `Client ${
-            user.firstName ? user.firstName : user.email
+            client.firstName ? client.firstName : client.email
           } left comment to task.`,
           html: clientCommentTemplate(
             client.firstName,
